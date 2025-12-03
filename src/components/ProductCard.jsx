@@ -39,7 +39,7 @@ export default function ProductCard({ product, addToCart }) {
     borderRadius: "6px",
     fontSize: "12px",
     whiteSpace: "nowrap",
-    opacity: 1,
+    zIndex: 10,
   };
 
   return (
@@ -59,7 +59,7 @@ export default function ProductCard({ product, addToCart }) {
         setIconHover(null);
       }}
     >
-      {/* Hover Icon Buttons */}
+      {/* Hover Icons */}
       {hover && (
         <div
           style={{
@@ -71,41 +71,33 @@ export default function ProductCard({ product, addToCart }) {
             zIndex: 10,
           }}
         >
-          {/* Compare */}
-          <div
-            style={iconStyle("compare")}
-            onMouseEnter={() => setIconHover("compare")}
-            onMouseLeave={() => setIconHover(null)}
-          >
-            {iconHover === "compare" && (
-              <div style={tooltipStyle}>Compare</div>
-            )}
-            <FaBalanceScale size={16} />
-          </div>
-
-          {/* Quick View */}
-          <div
-            style={iconStyle("quick")}
-            onMouseEnter={() => setIconHover("quick")}
-            onMouseLeave={() => setIconHover(null)}
-          >
-            {iconHover === "quick" && (
-              <div style={tooltipStyle}>Quick View</div>
-            )}
-            <FaEye size={16} />
-          </div>
-
-          {/* Wishlist (empty star) */}
-          <div
-            style={iconStyle("wishlist")}
-            onMouseEnter={() => setIconHover("wishlist")}
-            onMouseLeave={() => setIconHover(null)}
-          >
-            {iconHover === "wishlist" && (
-              <div style={tooltipStyle}>Add to Wishlist</div>
-            )}
-            <FaRegStar size={16} />
-          </div>
+          {["compare", "quick", "wishlist"].map((name) => {
+            const Icon =
+              name === "compare"
+                ? FaBalanceScale
+                : name === "quick"
+                ? FaEye
+                : FaRegStar;
+            return (
+              <div
+                key={name}
+                style={iconStyle(name)}
+                onMouseEnter={() => setIconHover(name)}
+                onMouseLeave={() => setIconHover(null)}
+              >
+                {iconHover === name && (
+                  <div style={tooltipStyle}>
+                    {name === "compare"
+                      ? "Compare"
+                      : name === "quick"
+                      ? "Quick View"
+                      : "Add to Wishlist"}
+                  </div>
+                )}
+                <Icon size={16} />
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -118,7 +110,6 @@ export default function ProductCard({ product, addToCart }) {
             style={{
               width: "100%",
               height: "260px",
-              background: "white",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -140,23 +131,44 @@ export default function ProductCard({ product, addToCart }) {
           </div>
 
           <div style={{ padding: "16px" }}>
+            {/* CATEGORY NAME */}
+            <p
+              style={{
+                fontSize: "12px",
+                fontWeight: 400,
+                color: "#6b7280",
+                marginBottom: "4px",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+            >
+              {product.categoryName || "Uncategorized"}
+            </p>
+
+            {/* PRODUCT NAME */}
             <h3
               style={{
                 fontSize: "18px",
                 fontWeight: 600,
                 color: "#111",
                 marginBottom: "8px",
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minHeight: "48px",
               }}
             >
               {product.name}
             </h3>
 
-            {/* NEW FONT STYLE FOR PRICE */}
+            {/* PRICE */}
             <p
               style={{
-                fontSize: "20px",
-                fontWeight: "700",
-                color: "black",
+                fontSize: "16px",
+                fontWeight: 400,
+                color: "#ef4444",
                 margin: 0,
                 fontFamily: "Inter, Poppins, sans-serif",
               }}

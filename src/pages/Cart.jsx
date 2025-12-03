@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../pages/SupabaseClient";
-
-// Lucide Icons
 import { Pencil, Truck, Ticket } from "lucide-react";
 
 export default function Cart() {
@@ -22,7 +20,6 @@ export default function Cart() {
 
   const updateQuantity = async (cart_item_id, newQty) => {
     if (newQty < 1) return;
-
     const { error } = await supabase
       .from("cart_items")
       .update({ quantity: newQty })
@@ -59,62 +56,131 @@ export default function Cart() {
 
   return (
     <div style={{ padding: "20px" }}>
-      {/* ITEMS LIST */}
-      <div>
-        <h2 style={{ marginBottom: "20px" }}>Shopping Cart</h2>
+      <style>
+        {`
+          @media (max-width: 768px) {
+            .cart-row {
+              flex-direction: column;
+              align-items: flex-start;
+            }
+            .right-column {
+              flex-direction: row;
+              justify-content: space-between;
+              width: 100%;
+              margin-top: 10px;
+            }
+            .right-column div {
+              flex: 1;
+              text-align: center;
+            }
+            .checkout-box {
+              width: 100%;
+              max-width: 400px;
+              margin-top: 20px;
+            }
+          }
+        `}
+      </style>
 
+      <div
+        className="cart-container"
+        style={{
+          maxWidth: "950px",
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "25px",
+        }}
+      >
+        <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
+          Shopping Cart
+        </h2>
+
+        {/* HEADINGS */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontWeight: "bold",
+            borderBottom: "2px solid #ddd",
+            padding: "0 15px 10px 15px",
+          }}
+        >
+          <div style={{ flex: 3 }}>Product</div>
+          <div style={{ flex: 1, textAlign: "center" }}>Price</div>
+          <div style={{ flex: 1, textAlign: "center" }}>Quantity</div>
+          <div style={{ flex: 1, textAlign: "center" }}>Subtotal</div>
+        </div>
+
+        {/* PRODUCTS */}
         {cartItems.map((item) => {
           const imageUrl = `src/assets/products/${item.products.product_id}.jpeg`;
           return (
             <div
               key={item.cart_item_id}
+              className="cart-row"
               style={{
                 display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 borderBottom: "1px solid #ddd",
-                padding: "20px 0",
-                gap: "20px",
+                padding: "15px",
+                gap: "15px",
               }}
             >
-              <img
-                src={imageUrl}
-                alt={item.products.name}
-                style={{ width: "140px", height: "140px", objectFit: "cover" }}
-              />
-
-              <div style={{ flexGrow: 1 }}>
-                <p style={{ fontSize: "16px", marginBottom: "10px" }}>
-                  {item.products.name}
-                </p>
-
-                <p style={{ fontSize: "18px", fontWeight: "bold" }}>
-                  ${item.products.price.toFixed(2)}
-                </p>
-
-                <button
-                  onClick={() => removeItem(item.cart_item_id)}
+              {/* Product info: 70-75% */}
+              <div style={{ display: "flex", alignItems: "center", flex: 3, gap: "15px" }}>
+                <img
+                  src={imageUrl}
+                  alt={item.products.name}
                   style={{
-                    background: "none",
-                    color: "#007185",
-                    border: "none",
-                    cursor: "pointer",
-                    marginTop: "10px",
+                    width: "100px",
+                    height: "100px",
+                    objectFit: "cover",
+                    borderRadius: "6px",
                   }}
-                >
-                  Remove
-                </button>
+                />
+                <div>
+                  <p style={{ fontSize: "16px", marginBottom: "6px" }}>
+                    {item.products.name}
+                  </p>
+                  <button
+                    onClick={() => removeItem(item.cart_item_id)}
+                    style={{
+                      background: "none",
+                      color: "#007185",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
 
-              <div style={{ textAlign: "right", width: "150px" }}>
-                <p style={{ marginBottom: "5px", fontWeight: "bold" }}>
-                  Quantity
-                </p>
+              {/* Right column: 25-30% */}
+              <div
+                className="right-column"
+                style={{
+                  display: "flex",
+                  flex: 1,
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  textAlign: "center",
+                  gap: "10px",
+                }}
+              >
+                {/* Price */}
+                <div>${item.products.price.toFixed(2)}</div>
 
+                {/* Quantity */}
                 <div
                   style={{
                     display: "flex",
+                    justifyContent: "center",
                     alignItems: "center",
-                    justifyContent: "flex-end",
-                    gap: "8px",
+                    gap: "5px",
                   }}
                 >
                   <button
@@ -122,7 +188,7 @@ export default function Cart() {
                       updateQuantity(item.cart_item_id, item.quantity - 1)
                     }
                     style={{
-                      padding: "5px 10px",
+                      padding: "3px 8px",
                       cursor: "pointer",
                       border: "1px solid #ccc",
                       background: "white",
@@ -130,19 +196,15 @@ export default function Cart() {
                   >
                     -
                   </button>
-
-                  <span
-                    style={{ fontSize: "16px", width: "30px", textAlign: "center" }}
-                  >
+                  <span style={{ width: "25px", textAlign: "center" }}>
                     {item.quantity}
                   </span>
-
                   <button
                     onClick={() =>
                       updateQuantity(item.cart_item_id, item.quantity + 1)
                     }
                     style={{
-                      padding: "5px 10px",
+                      padding: "3px 8px",
                       cursor: "pointer",
                       border: "1px solid #ccc",
                       background: "white",
@@ -152,108 +214,98 @@ export default function Cart() {
                   </button>
                 </div>
 
-                <p style={{ marginTop: "10px", fontWeight: "bold" }}>
+                {/* Subtotal */}
+                <div style={{ fontWeight: "bold", color: "#0095ff" }}>
                   ${(item.products.price * item.quantity).toFixed(2)}
-                </p>
+                </div>
               </div>
             </div>
           );
         })}
-      </div>
 
-      {/* BOTTOM-RIGHT CHECKOUT BOX */}
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "flex-end",
-          marginTop: "30px",
-        }}
-      >
+        {/* CHECKOUT BOX */}
         <div
+          className="checkout-box"
           style={{
-            width: "320px",
-            border: "1px solid #eee",
-            borderRadius: "6px",
-            padding: "20px",
+            display: "flex",
+            justifyContent: "flex-end",
+            width: "100%",
           }}
         >
-          {/* ICON TABS */}
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              textAlign: "center",
-              marginBottom: "20px",
-              borderBottom: "1px solid #eee",
-              paddingBottom: "12px",
+              width: "280px",
+              border: "1px solid #eee",
+              borderRadius: "6px",
+              padding: "18px",
             }}
           >
-            {/* NOTE */}
-            <div style={{ flex: 1 }}>
-              <Pencil size={18} />
-              <p style={{ fontSize: "14px", marginTop: "6px" }}>Note</p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                textAlign: "center",
+                marginBottom: "18px",
+                borderBottom: "1px solid #eee",
+                paddingBottom: "10px",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <Pencil size={18} />
+                <p style={{ fontSize: "14px", marginTop: "6px" }}>Note</p>
+              </div>
+              <div style={{ width: "1px", background: "#ddd" }}></div>
+              <div style={{ flex: 1 }}>
+                <Truck size={18} />
+                <p style={{ fontSize: "14px", marginTop: "6px" }}>Shipping</p>
+              </div>
+              <div style={{ width: "1px", background: "#ddd" }}></div>
+              <div style={{ flex: 1 }}>
+                <Ticket size={18} />
+                <p style={{ fontSize: "14px", marginTop: "6px" }}>Coupon</p>
+              </div>
             </div>
 
-            <div style={{ width: "1px", background: "#ddd" }}></div>
-
-            {/* SHIPPING */}
-            <div style={{ flex: 1 }}>
-              <Truck size={18} />
-              <p style={{ fontSize: "14px", marginTop: "6px" }}>Shipping</p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "10px",
+              }}
+            >
+              <span>Subtotal</span>
+              <span style={{ color: "#0095ff" }}>${subtotal.toFixed(2)}</span>
             </div>
 
-            <div style={{ width: "1px", background: "#ddd" }}></div>
-
-            {/* COUPON */}
-            <div style={{ flex: 1 }}>
-              <Ticket size={18} />
-              <p style={{ fontSize: "14px", marginTop: "6px" }}>Coupon</p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+                borderTop: "1px solid #eee",
+                paddingTop: "10px",
+              }}
+            >
+              <strong>Total</strong>
+              <strong style={{ color: "#0095ff" }}>${subtotal.toFixed(2)}</strong>
             </div>
-          </div>
 
-          {/* SUBTOTAL */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "10px",
-            }}
-          >
-            <span>Subtotal</span>
-            <span style={{ color: "#0095ff" }}>${subtotal.toFixed(2)}</span>
+            <button
+              style={{
+                width: "100%",
+                padding: "12px",
+                background: "black",
+                color: "white",
+                borderRadius: "25px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: "bold",
+                fontSize: "14px",
+              }}
+            >
+              CHECKOUT
+            </button>
           </div>
-
-          {/* TOTAL */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "20px",
-              borderTop: "1px solid #eee",
-              paddingTop: "10px",
-            }}
-          >
-            <strong>Total</strong>
-            <strong style={{ color: "#0095ff" }}>${subtotal.toFixed(2)}</strong>
-          </div>
-
-          {/* CHECKOUT BUTTON */}
-          <button
-            style={{
-              width: "100%",
-              padding: "14px",
-              background: "black",
-              color: "white",
-              borderRadius: "30px",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: "14px",
-            }}
-          >
-            CHECKOUT
-          </button>
         </div>
       </div>
     </div>

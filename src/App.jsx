@@ -6,6 +6,9 @@ import Cart from "./pages/Cart";
 import Navbar from "./components/Navbar";
 import { CartProvider } from "./components/CartContext";
 import LandingPage from "./pages/LandingPage";
+import Footer from "./components/Footer";
+import FooterFeatures from "./components/FooterFeatures";
+import MobileSearch from "./components/MobileSearch";
 function App() {
   
   return (
@@ -13,12 +16,16 @@ function App() {
       <BrowserRouter>
       <Navbar/>
         <Routes>
-          <Route path="/Home" element={<LandingPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/search" element={<MobileSearch />} />
           
         </Routes>
+              <FooterFeatures />
+    <Footer />
+
       </BrowserRouter>
     </CartProvider>
   );

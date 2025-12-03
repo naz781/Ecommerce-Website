@@ -7,10 +7,11 @@ import { supabase } from "../pages/SupabaseClient";
 function Shop() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [grid, setGrid] = useState(3);
   const [sort, setSort] = useState("");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { addToCart } = useContext(CartContext);
 
@@ -20,15 +21,23 @@ function Shop() {
 
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategories, sort]);
+  }, [selectedCategories, sort, categories]);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Fetch all categories
   const fetchCategories = async () => {
-    const { data, error } = await supabase.from("categories").select("*");
-    if (!error) setCategories(data);
+    const { data } = await supabase.from("categories").select("*");
+    if (data) setCategories(data);
   };
 
+  // Fetch products
   const fetchProducts = async () => {
-    let query = supabase.from("products").select("*, product_images(image_url)");
+    let query = supabase.from("products").select("*");
 
     if (selectedCategories.length > 0) {
       query = query.in("category_id", selectedCategories);
@@ -40,38 +49,49 @@ function Shop() {
 
     const { data } = await query;
 
-    // 🔥 Inject static image paths here:
+    // Map products to include static images and category name
     const extended = (data || []).map((p) => {
       const formats = ["avif", "webp", "jpg", "jpeg", "png"];
       const maxImages = 6;
-
       const staticImages = Array.from({ length: maxImages }).flatMap((_, index) =>
         formats.map(
-          (ext) =>
-            `/assets/products/${p.product_id}/${index === 0 ? "main" : index}.${ext}`
+          (ext) => `/assets/products/${p.product_id}/${index === 0 ? "main" : index}.${ext}`
         )
       );
+
+      // Find category name from category_id
+      const category = categories.find((c) => c.category_id === p.category_id);
 
       return {
         ...p,
         staticImages,
+        categoryName: category ? category.name : "Uncategorized",
       };
     });
 
     setProducts(extended);
   };
 
-  const removeCategory = (catID) => {
-    setSelectedCategories(selectedCategories.filter((id) => id !== catID));
-  };
+  const removeCategory = (id) =>
+    setSelectedCategories(selectedCategories.filter((c) => c !== id));
 
   const clearAll = () => {
     setSelectedCategories([]);
     setSort("");
   };
 
+  const gridOptions = isMobile ? [2, "list"] : [2, 3, 4, "list"];
+
+  const getIcon = (item) => {
+    if (item === "list") return "≡"; // bars icon
+    if (item === 2) return "▦"; // 2-grid
+    if (item === 3) return "▤"; // 3-grid
+    if (item === 4) return "▧"; // 4-grid
+    return item;
+  };
+
   return (
-    <div style={{ width: "100%", padding: "20px" }}>
+    <div style={{ width: "100%", padding: "20px", position: "relative" }}>
       <h1
         style={{
           textAlign: "center",
@@ -83,24 +103,96 @@ function Shop() {
         Shop
       </h1>
 
-      <div style={{ display: "flex" }}>
-        {/* LEFT FILTER */}
-        <div style={{ width: "22%", padding: "10px" }}>
-          <CategoryFilter
-            categories={categories}
-            selectedCategories={selectedCategories}
-            setSelectedCategories={setSelectedCategories}
-          />
-        </div>
+      <div style={{ display: "flex", gap: "20px", position: "relative" }}>
+        {/* DESKTOP FILTER SIDEBAR */}
+        {!isMobile && (
+          <div style={{ width: "22%", padding: "10px" }}>
+            <CategoryFilter
+              categories={categories}
+              selectedCategories={selectedCategories}
+              setSelectedCategories={setSelectedCategories}
+            />
+          </div>
+        )}
 
-        {/* RIGHT PRODUCT GRID */}
-        <div style={{ width: "78%", padding: "10px" }}>
+        {/* MOBILE FILTER VERTICAL TAB */}
+        {isMobile && !sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(true)}
+            style={{
+              position: "fixed",
+              top: "200px",
+              left: "0px",
+              background: "#f3f4f6",
+              padding: "10px 6px",
+              writingMode: "vertical-rl",
+              transform: "rotate(180deg)",
+              borderRadius: "6px 6px 0 0",
+              fontWeight: "600",
+              cursor: "pointer",
+              zIndex: 2500,
+              boxShadow: "0 0 6px rgba(0,0,0,0.15)",
+            }}
+          >
+            Filters
+          </div>
+        )}
+
+        {/* MOBILE SLIDE-IN SIDEBAR */}
+        {isMobile && sidebarOpen && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              height: "100%",
+              width: "75%",
+              background: "#fff",
+              zIndex: 3000,
+              paddingTop: "80px",
+              paddingLeft: "15px",
+              paddingRight: "15px",
+              overflowY: "auto",
+              boxShadow: "2px 0 10px rgba(0,0,0,0.25)",
+              transition: "transform 0.3s ease",
+            }}
+          >
+            <button
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                position: "absolute",
+                top: "60px",
+                right: "15px",
+                fontSize: "32px",
+                fontWeight: "bold",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                zIndex: 3100,
+              }}
+            >
+              ×
+            </button>
+
+            <CategoryFilter
+              categories={categories}
+              selectedCategories={selectedCategories}
+              setSelectedCategories={setSelectedCategories}
+            />
+          </div>
+        )}
+
+        {/* MAIN CONTENT */}
+        <div style={{ flex: 1, padding: "10px" }}>
+          {/* TOP BAR: count + grid + sort */}
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               marginBottom: "20px",
+              flexWrap: "wrap",
+              gap: "10px",
             }}
           >
             <div style={{ fontSize: "16px", color: "#4b5563" }}>
@@ -108,34 +200,41 @@ function Shop() {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                {[2, 3, 4].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setGrid(n)}
-                    style={{
-                      padding: "6px 10px",
-                      border: grid === n ? "2px solid black" : "1px solid #ddd",
-                      background: "white",
-                      cursor: "pointer",
-                      borderRadius: "5px",
-                    }}
-                  >
-                    {n}
-                  </button>
-                ))}
+              {/* GRID ICON BUTTONS */}
+              <div style={{ display: "flex", gap: "10px" }}>
+                {gridOptions.map((item) => {
+                  const isActive =
+                    grid === item || (grid === 1 && item === "list");
+
+                  return (
+                    <button
+                      key={item}
+                      onClick={() => setGrid(item === "list" ? 1 : item)}
+                      style={{
+                        padding: "8px 12px",
+                        fontSize: "18px",
+                        borderRadius: "8px",
+                        border: isActive ? "2px solid #0284c7" : "1px solid #d1d5db",
+                        background: isActive ? "#e0f2fe" : "#fff",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {getIcon(item)}
+                    </button>
+                  );
+                })}
               </div>
 
+              {/* SORT */}
               <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
                 style={{
-                  padding: "6px 10px",
+                  padding: "6px 12px",
                   borderRadius: "6px",
                   border: "1px solid #d1d5db",
                   fontSize: "14px",
-                  cursor: "pointer",
                 }}
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
               >
                 <option value="">Default</option>
                 <option value="price_asc">Price Low → High</option>
@@ -145,14 +244,14 @@ function Shop() {
             </div>
           </div>
 
+          {/* ACTIVE FILTER TAGS */}
           {selectedCategories.length > 0 && (
-            <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
-              {selectedCategories.map((catID) => {
-                const cat = categories.find((c) => c.category_id === catID);
-
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              {selectedCategories.map((id) => {
+                const cat = categories.find((c) => c.category_id === id);
                 return (
                   <div
-                    key={catID}
+                    key={id}
                     style={{
                       padding: "6px 12px",
                       background: "#f3f4f6",
@@ -160,17 +259,12 @@ function Shop() {
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      fontSize: "14px",
                     }}
                   >
                     {cat?.name}
                     <span
-                      onClick={() => removeCategory(catID)}
-                      style={{
-                        cursor: "pointer",
-                        fontWeight: "bold",
-                        paddingLeft: "4px",
-                      }}
+                      onClick={() => removeCategory(id)}
+                      style={{ cursor: "pointer" }}
                     >
                       ×
                     </span>
@@ -178,36 +272,32 @@ function Shop() {
                 );
               })}
 
-              <div
+              <span
                 onClick={clearAll}
                 style={{
-                  padding: "6px 12px",
-                  cursor: "pointer",
                   color: "#0284c7",
-                  fontSize: "14px",
+                  cursor: "pointer",
+                  fontWeight: "600",
                 }}
               >
                 Clear All
-              </div>
+              </span>
             </div>
           )}
 
+          {/* PRODUCT GRID */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: `repeat(${grid}, 1fr)`,
+              gridTemplateColumns: grid === 1 ? "1fr" : `repeat(${grid}, 1fr)`,
               gap: "20px",
+              marginTop: "20px",
             }}
           >
             {products.map((p) => (
               <ProductCard
                 key={p.product_id}
-                product={{
-                  ...p,
-
-                  // 🔥 Send static images to ProductCard
-                  images: p.staticImages,
-                }}
+                product={{ ...p, images: p.staticImages }}
                 addToCart={addToCart}
               />
             ))}
@@ -219,4 +309,3 @@ function Shop() {
 }
 
 export default Shop;
- 
