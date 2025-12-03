@@ -10,7 +10,7 @@ import {
   FaStore,
   FaTimes,
 } from "react-icons/fa";
-
+import logo from "../assets/Logos/logo2.png"
 function Navbar() {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -38,12 +38,14 @@ function Navbar() {
               boxShadow: "0 1px 5px rgba(0,0,0,0.1)",
             }}
           >
-            <div
+            {/* <div
               style={{ fontSize: "28px", fontWeight: "bold", cursor: "pointer" }}
               onClick={() => navigate("/")}
             >
-              MyLogo
-            </div>
+              3sproshop
+            </div> */}
+            <img src={logo} alt="Logo" style={{ height: "50px" ,p:0}} />
+
 
             <div style={{ flex: 1, margin: "0 10%" }}>
               <div style={{ position: "relative" }}>

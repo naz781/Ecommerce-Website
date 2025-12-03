@@ -23,7 +23,8 @@ export default function LandingPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      await Promise.all([fetchCategories(), fetchProducts()]);
+      await fetchCategories(); // fetch categories first
+      await fetchProducts();   // then fetch products
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -44,8 +45,8 @@ export default function LandingPage() {
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .order("created_at", { ascending: false }); // Optional: order by date
-    
+      .order("created_at", { ascending: false });
+
     if (error) {
       console.error("Error fetching products:", error);
       setProducts([]);
@@ -53,13 +54,19 @@ export default function LandingPage() {
       return;
     }
 
+    // Map category IDs to category names
+    const categoryMap = {};
+    categories.forEach(cat => {
+      categoryMap[cat.category_id] = cat.name;
+    });
+
     const extendedProducts = (data || []).map((product) => ({
       ...product,
       staticImages: [`/assets/products/${product.product_id}/main.jpeg`],
+      categoryName: categoryMap[product.category_id] || "Uncategorized",
     }));
 
     setProducts(extendedProducts);
-    // SET ALL PRODUCTS AS FEATURED, NOT JUST FIRST 6
     setFeaturedProducts(extendedProducts);
   };
 
@@ -80,66 +87,61 @@ export default function LandingPage() {
 
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-{/* HERO SECTION */}
-<section
-  style={{
-    position: "relative",
-    width: "100%",
-    height: isMobile ? 250 : 300, // hero height
-    backgroundColor: "#fff",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "flex-start", // align image to top
-    overflow: "hidden",
-  }}
->
-  <img
-    src={hero}
-    alt="Hero Banner"
-    style={{
-      width: "100%",
-      height: "100%", // fill the container height
-      objectFit: "contain",
-      objectPosition: "top", // push image to the top
-      display: "block",
-    }}
-  />
-
-  {/* Shop Now button slightly right of center */}
-  <div
-    style={{
-      position: "absolute",
-      top: "50%",
-      left: "55%", // slightly right of center
-      transform: "translate(-50%, -50%)",
-    }}
-  >
-    <button
-      style={{
-        background: "black",
-        padding: "12px 24px",
-        borderRadius: 8,
-        fontWeight: "600",
-        color: "white",
-        cursor: "pointer",
-        transition: "0.3s",
-      }}
-      onMouseEnter={(e) => (e.target.style.background = "#333")}
-      onMouseLeave={(e) => (e.target.style.background = "black")}
-    >
-      Shop Now
-    </button>
-  </div>
-</section>
-
-
+      {/* HERO SECTION */}
+      <section
+        style={{
+          position: "relative",
+          width: "100%",
+          height: isMobile ? 250 : 300,
+          backgroundColor: "#fff",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-start",
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={hero}
+          alt="Hero Banner"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "top",
+            display: "block",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "55%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <button
+            style={{
+              background: "black",
+              padding: "12px 24px",
+              borderRadius: 8,
+              fontWeight: "600",
+              color: "white",
+              cursor: "pointer",
+              transition: "0.3s",
+            }}
+            onMouseEnter={(e) => (e.target.style.background = "#333")}
+            onMouseLeave={(e) => (e.target.style.background = "black")}
+          >
+            Shop Now
+          </button>
+        </div>
+      </section>
 
       {/* CATEGORY SCROLL */}
       <section style={{ marginTop: 32, padding: "0 16px" }}>
         <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>
           Shop by Category
         </h2>
-
         <div
           style={{
             display: "flex",
@@ -175,12 +177,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURED PRODUCTS — ALL PRODUCTS CAROUSEL */}
+      {/* FEATURED PRODUCTS */}
       <section style={{ marginTop: 48, padding: "0 16px" }}>
         <h2 style={{ fontSize: isMobile ? 24 : 32, fontWeight: 600, marginBottom: 24 }}>
           Featured Products
         </h2>
-
         {featuredProducts.length > 0 ? (
           <FeaturedCarousel 
             products={featuredProducts} 
@@ -198,8 +199,6 @@ export default function LandingPage() {
           </div>
         )}
       </section>
-
-
 
       {/* CATEGORY SECTIONS */}
       {categories.map((category) => {
