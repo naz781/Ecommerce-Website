@@ -128,7 +128,8 @@ function Navbar() {
             style={{ fontSize: "24px", cursor: "pointer" }}
             onClick={() => setSidebarOpen(true)}
           />
-          <div style={{ fontSize: "20px", fontWeight: "bold" }}>MyLogo</div>
+          {/* <div style={{ fontSize: "20px", fontWeight: "bold" }}>MyLogo</div> */}
+          <img src={logo} alt="Logo" style={{ height: "30px" ,}} />
           <FaSearch
             style={{ fontSize: "24px", cursor: "pointer" }}
             onClick={() => navigate("/search")} // Will navigate to search page

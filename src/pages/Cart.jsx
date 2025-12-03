@@ -54,6 +54,15 @@ export default function Cart() {
     0
   );
 
+  // ✅ Load images like ProductCard
+  const getLocalImage = (id) => {
+    try {
+      return new URL(`/src/assets/products/${id}.jpeg`, import.meta.url).href;
+    } catch {
+      return "https://via.placeholder.com/100";
+    }
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <style>
@@ -114,7 +123,7 @@ export default function Cart() {
 
         {/* PRODUCTS */}
         {cartItems.map((item) => {
-          const imageUrl = `src/assets/products/${item.products.product_id}.jpeg`;
+          const imageUrl = getLocalImage(item.products.product_id);
           return (
             <div
               key={item.cart_item_id}
@@ -128,7 +137,7 @@ export default function Cart() {
                 gap: "15px",
               }}
             >
-              {/* Product info: 70-75% */}
+              {/* Product info */}
               <div style={{ display: "flex", alignItems: "center", flex: 3, gap: "15px" }}>
                 <img
                   src={imageUrl}
@@ -159,7 +168,7 @@ export default function Cart() {
                 </div>
               </div>
 
-              {/* Right column: 25-30% */}
+              {/* Right column */}
               <div
                 className="right-column"
                 style={{
@@ -171,10 +180,8 @@ export default function Cart() {
                   gap: "10px",
                 }}
               >
-                {/* Price */}
                 <div>${item.products.price.toFixed(2)}</div>
 
-                {/* Quantity */}
                 <div
                   style={{
                     display: "flex",
@@ -214,7 +221,6 @@ export default function Cart() {
                   </button>
                 </div>
 
-                {/* Subtotal */}
                 <div style={{ fontWeight: "bold", color: "#0095ff" }}>
                   ${(item.products.price * item.quantity).toFixed(2)}
                 </div>
