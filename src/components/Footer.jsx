@@ -26,20 +26,31 @@ export default function Footer() {
           <p style={{ marginTop: "0.8rem" }}>+1 (732) 474-3377‬</p>
           <p>sales@3sproshop.com</p>
           <div style={{ display: "flex", gap: "0.6rem", marginTop: "1.2rem" }}>
-            {[FaFacebook, FaInstagram, FaTwitter, FaYoutube].map((Icon, index) => (
-              <a
-                key={index}
-                href="#"
-                style={{
-                  padding: "0.5rem",
-                  borderRadius: "50%",
-                  backgroundColor: "#f3f4f6",
-                }}
-              >
-                <Icon size={18} color="#111827" />
-              </a>
-            ))}
-          </div>
+  {[
+    { Icon: FaFacebook, url: "https://www.facebook.com/" },
+    { Icon: FaInstagram, url: "https://www.instagram.com/" },
+    { Icon: FaTwitter, url: "https://twitter.com/" },
+    { Icon: FaYoutube, url: "https://www.youtube.com/" },
+  ].map(({ Icon, url }, index) => (
+    <a
+      key={index}
+      href={url}
+      target="_blank"        // opens in new tab
+      rel="noopener noreferrer"  // security
+      style={{
+        padding: "0.5rem",
+        borderRadius: "50%",
+        backgroundColor: "#f3f4f6",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Icon size={18} color="#111827" />
+    </a>
+  ))}
+</div>
+
         </>
       ),
     },

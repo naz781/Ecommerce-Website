@@ -6,6 +6,10 @@ export const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const user_id = 1; // Replace with dynamic user ID in real app
   const [cartItems, setCartItems] = useState([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // NEW
+
+  const openSidebar = () => setIsSidebarOpen(true); // NEW
+  const closeSidebar = () => setIsSidebarOpen(false); // NEW
 
   // Fetch cart items from Supabase
   const fetchCart = async () => {
@@ -26,13 +30,11 @@ export const CartProvider = ({ children }) => {
 
   // Add product to cart
   const addToCart = async (product) => {
-    // Check if product exists in cart
     const existing = cartItems.find(
       (item) => item.products.product_id === product.product_id
     );
 
     if (existing) {
-      // Update quantity in Supabase
       const { error } = await supabase
         .from("cart_items")
         .update({ quantity: existing.quantity + 1 })
@@ -48,7 +50,6 @@ export const CartProvider = ({ children }) => {
         );
       }
     } else {
-      // Insert new item in Supabase
       const { data, error } = await supabase
         .from("cart_items")
         .insert({ user_id, product_id: product.product_id, quantity: 1 })
@@ -59,6 +60,8 @@ export const CartProvider = ({ children }) => {
         setCartItems((prev) => [...prev, data]);
       }
     }
+
+    openSidebar(); // <-- automatically open sidebar when adding
   };
 
   // Update quantity of a cart item
@@ -93,7 +96,17 @@ export const CartProvider = ({ children }) => {
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, updateQuantity, removeFromCart, totalItems, fetchCart }}
+      value={{
+        cartItems,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        totalItems,
+        fetchCart,
+        isSidebarOpen, // NEW
+        openSidebar,   // NEW
+        closeSidebar,  // NEW
+      }}
     >
       {children}
     </CartContext.Provider>

@@ -2,16 +2,40 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "./SupabaseClient";
 import { CartContext } from "../components/CartContext";
+import ReviewModal from "../components/ReviewModal";
+import QuestionModal from "../components/QuestionModal";
+
+// MUI
+import {
+  Box,
+  Button,
+  Tabs,
+  Tab,
+  Typography,
+  Paper,
+  Rating,
+  Stack,
+  IconButton,
+} from "@mui/material";
 
 function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [productImages, setProductImages] = useState([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [reviews, setReviews] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [tabIndex, setTabIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+
   const { addToCart } = useContext(CartContext);
 
   useEffect(() => {
     fetchProduct();
+    fetchReviews();
+    fetchQuestions();
   }, [id]);
 
   const fetchProduct = async () => {
@@ -24,6 +48,24 @@ function ProductDetails() {
     loadProductImages(id);
   };
 
+  const fetchReviews = async () => {
+    const { data } = await supabase
+      .from("product_reviews")
+      .select("*")
+      .eq("product_id", id)
+      .order("created_at", { ascending: false });
+    setReviews(data || []);
+  };
+
+  const fetchQuestions = async () => {
+    const { data } = await supabase
+      .from("product_questions")
+      .select("*")
+      .eq("product_id", id)
+      .order("created_at", { ascending: false });
+    setQuestions(data || []);
+  };
+
   const createImageUrl = (filename) => {
     try {
       return new URL(`/src/assets/products/${filename}`, import.meta.url).href;
@@ -34,11 +76,7 @@ function ProductDetails() {
 
   const loadProductImages = (productId) => {
     const images = [];
-    const possibleFiles = [
-      `${productId}.jpeg`,
-      `${productId}.jpg`,
-      `${productId}.png`,
-    ];
+    const possibleFiles = [`${productId}.jpeg`, `${productId}.jpg`, `${productId}.png`];
 
     for (let i = 1; i <= 10; i++) {
       ["-", "_"].forEach((sep) => {
@@ -57,212 +95,250 @@ function ProductDetails() {
     setProductImages(uniqueImages.length ? uniqueImages : ["https://via.placeholder.com/600x600"]);
   };
 
-  if (!product) return <p style={{ textAlign: "center", marginTop: "50px" }}>Loading...</p>;
+  if (!product)
+    return <p style={{ textAlign: "center", marginTop: "50px" }}>Loading...</p>;
+
+  const modernButtonStyles = {
+    borderRadius: "50px",
+    textTransform: "none",
+    fontWeight: 700,
+    height: "52px",
+  };
 
   return (
-    <div style={{ maxWidth: "1300px", margin: "auto", padding: "20px" }}>
-      <div
-        style={{
-          display: "flex",
-          gap: "40px",
-          flexWrap: "wrap", // Wrap on smaller screens
-        }}
-      >
-        {/* LEFT SIDE — IMAGES */}
-        <div style={{ display: "flex", gap: "20px", flex: "1 1 300px", minWidth: "280px" }}>
-          {/* Thumbnails */}
+    <Box sx={{ maxWidth: 1300, mx: "auto", p: 3 }}>
+      {/* TOP SECTION */}
+      <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+        {/* LEFT IMAGE SECTION */}
+        <Box sx={{ display: "flex", gap: 2, flex: "1 1 300px", minWidth: 280 }}>
           {productImages.length > 1 && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                width: "80px",
-                flexShrink: 0,
-              }}
-            >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: 80 }}>
               {productImages.map((img, index) => (
                 <img
                   key={index}
                   src={img}
-                  alt={`${product.name} view ${index + 1}`}
+                  alt={"view " + index}
                   onClick={() => setSelectedImageIndex(index)}
                   style={{
-                    width: "80px",
-                    height: "80px",
-                    borderRadius: "10px",
-                    border: selectedImageIndex === index ? "2px solid #000" : "1px solid #e5e7eb",
-                    objectFit: "cover",
+                    width: 80,
+                    height: 80,
+                    borderRadius: 10,
+                    border:
+                      selectedImageIndex === index
+                        ? "2px solid #1976d2"
+                        : "1px solid #e0e0e0",
                     cursor: "pointer",
-                    opacity: selectedImageIndex === index ? 1 : 0.8,
+                    objectFit: "cover",
                   }}
                   onError={(e) => (e.target.style.display = "none")}
                 />
               ))}
-            </div>
+            </Box>
           )}
 
-          {/* Main image */}
-          <div style={{ flex: "1 1 auto" }}>
+          {/* MAIN IMAGE */}
+          <Paper sx={{ p: 2, borderRadius: 3, flexGrow: 1 }}>
             <img
               src={productImages[selectedImageIndex]}
               alt={product.name}
               style={{
                 width: "100%",
-                maxWidth: "480px",
-                height: "auto",
-                borderRadius: "14px",
-                objectFit: "contain",
-                background: "#f3f4f6",
-                padding: "20px",
-                border: "1px solid #e5e7eb",
+                maxWidth: 500,
+                borderRadius: 14,
+                background: "#f5f5f5",
               }}
               onError={(e) => (e.target.src = "https://via.placeholder.com/600x600")}
             />
+          </Paper>
+        </Box>
 
-            {/* Image navigation */}
-            {productImages.length > 1 && (
-              <div style={{ display: "flex", justifyContent: "center", gap: "10px", marginTop: "10px", flexWrap: "wrap" }}>
-                <button
-                  onClick={() =>
-                    setSelectedImageIndex(
-                      selectedImageIndex === 0 ? productImages.length - 1 : selectedImageIndex - 1
-                    )
-                  }
-                  style={{
-                    background: "black",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "36px",
-                    height: "36px",
-                    cursor: "pointer",
-                    fontSize: "18px",
-                  }}
-                >
-                  ◀
-                </button>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-                  {productImages.map((_, index) => (
-                    <div
-                      key={index}
-                      onClick={() => setSelectedImageIndex(index)}
-                      style={{
-                        width: "10px",
-                        height: "10px",
-                        borderRadius: "50%",
-                        background: selectedImageIndex === index ? "black" : "#ccc",
-                        cursor: "pointer",
-                      }}
-                    />
-                  ))}
-                </div>
-                <button
-                  onClick={() =>
-                    setSelectedImageIndex(
-                      selectedImageIndex === productImages.length - 1 ? 0 : selectedImageIndex + 1
-                    )
-                  }
-                  style={{
-                    background: "black",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "36px",
-                    height: "36px",
-                    cursor: "pointer",
-                    fontSize: "18px",
-                  }}
-                >
-                  ▶
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT SIDE — PRODUCT INFO */}
-        <div style={{ flex: "1 1 300px", minWidth: "280px" }}>
-          {product.discount && (
-            <span
-              style={{
-                background: "#dc2626",
-                color: "white",
-                padding: "4px 10px",
-                borderRadius: "12px",
-                fontWeight: 600,
-                fontSize: "14px",
-              }}
-            >
-              -{product.discount}%
-            </span>
-          )}
-
-          <h1 style={{ marginTop: "10px", fontSize: "26px", fontWeight: 700 }}>
+        {/* RIGHT PRODUCT INFO */}
+        <Box sx={{ flex: "1 1 300px", minWidth: 280 }}>
+          <Typography variant="h4" fontWeight={700} gutterBottom>
             {product.name}
-          </h1>
+          </Typography>
 
-          <div style={{ margin: "15px 0", fontSize: "22px" }}>
-            {product.discount ? (
-              <>
-                <span style={{ fontWeight: 700, color: "#16a34a", marginRight: "10px" }}>
-                  ${(product.price - (product.price * product.discount) / 100).toFixed(2)}
-                </span>
-                <span style={{ textDecoration: "line-through", color: "#6b7280" }}>
-                  ${product.price}
-                </span>
-              </>
-            ) : (
-              <span style={{ fontWeight: 700 }}>${product.price}</span>
-            )}
-          </div>
+          <Typography variant="h5" fontWeight={700} color="primary" gutterBottom>
+            ${product.price}
+          </Typography>
 
-          <p style={{ color: "#4b5563", marginBottom: "20px" }}>
-            ⭐ {product.avg_rating || "0.0"} (0 reviews)
-          </p>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 3 }}>
+            <Rating value={product.avg_rating || 0} precision={0.5} readOnly />
+            <Typography>({reviews.length} reviews)</Typography>
+          </Stack>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
-            <button
-              onClick={() => addToCart(product)}
-              style={{
+          {/* QUANTITY + ADD TO CART BUTTONS */}
+          <Box sx={{ mb: 3 }}>
+            {/* <Typography fontWeight={600} sx={{ mb: 1 }}>Quantity</Typography> */}
+            <Stack direction="row" spacing={2} alignItems="center">
+              {/* Quantity Buttons */}
+              {/* <Stack
+                direction="row"
+                alignItems="center"
+                sx={{
+                  background: "#f3f3f3",
+                  borderRadius: "50px",
+                  height: 52,
+                  px: 2,
+                  gap: 1,
+                }}
+              > */}
+                {/* <IconButton onClick={() => setQuantity(Math.max(1, quantity - 1))}>–</IconButton>
+                <Typography fontWeight={600}>{quantity}</Typography>
+                <IconButton onClick={() => setQuantity(quantity + 1)}>+</IconButton> */}
+              {/* </Stack> */}
+
+              {/* Add to Cart */}
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => addToCart({ ...product, quantity })}
+                sx={{
+                  ...modernButtonStyles,
+                  background: "#f1f1f1",
+                  color: "black",
+                  boxShadow: "none",
+                }}
+              >
+                ADD TO CART
+              </Button>
+            </Stack>
+
+            {/* BUY NOW BUTTON */}
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                ...modernButtonStyles,
+                mt: 2,
                 background: "black",
                 color: "white",
-                padding: "12px 30px",
-                borderRadius: "8px",
-                fontSize: "15px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              ADD TO CART
-            </button>
-
-            <button
-              style={{
-                background: "#f3f4f6",
-                padding: "12px 30px",
-                borderRadius: "8px",
-                fontWeight: 600,
-                cursor: "pointer",
+                ":hover": { background: "#333" },
               }}
             >
               BUY NOW
-            </button>
-          </div>
+            </Button>
+          </Box>
+        </Box>
+      </Box>
 
-          <p style={{ marginTop: "25px", color: "#374151" }}>{product.description}</p>
-          <p style={{ marginTop: "30px", color: "#6b7280" }}>
-            📦 Estimated Delivery: <b>01 – 08 Dec, 2025</b>
-          </p>
+      {/* TABS SECTION */}
+      <Box sx={{ mt: 6 }}>
+        <Tabs
+          value={tabIndex}
+          onChange={(e, idx) => setTabIndex(idx)}
+          textColor="primary"
+          indicatorColor="primary"
+          sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}
+        >
+          <Tab label="Description" />
+          <Tab label="Reviews" />
+          <Tab label="Questions" />
+        </Tabs>
 
-          <div style={{ marginTop: "15px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa" style={{ width: "60px" }} />
-            {/* <img src="https://upload.wikimedia.org/wikipedia/commons/b/b7/MasterCard_Logo.png" alt="Mastercard" style={{ width: "60px" }} />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/5a/PayPal.svg" alt="PayPal" style={{ width: "60px" }} /> */}
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* DESCRIPTION */}
+        {tabIndex === 0 && (
+          <Paper sx={{ p: 4, borderRadius: 3 }}>
+            <Typography fontSize={18} lineHeight={1.8}>
+              {product.description}
+            </Typography>
+          </Paper>
+        )}
+
+        {/* REVIEWS */}
+        {tabIndex === 1 && (
+          <Box>
+            <Button
+              variant="contained"
+              sx={{
+                mb: 3,
+                background: "black",
+                color: "white",
+                borderRadius: "50px",
+                px: 4,
+                py: 1.4,
+                textTransform: "none",
+                fontWeight: 600,
+              }}
+              onClick={() => setShowReviewModal(true)}
+            >
+              Write a Review
+            </Button>
+
+            {reviews.length === 0 && <Typography>No reviews yet.</Typography>}
+
+            <Stack spacing={2}>
+              {reviews.map((r) => (
+                <Paper key={r.review_id} sx={{ p: 3, borderRadius: 3 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography fontWeight={700}>{r.title}</Typography>
+                    <Rating value={r.rating} readOnly />
+                  </Stack>
+                  <Typography sx={{ mt: 1 }}>{r.review}</Typography>
+                  <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
+                    {r.name} – {new Date(r.created_at).toLocaleDateString()}
+                  </Typography>
+                </Paper>
+              ))}
+            </Stack>
+          </Box>
+        )}
+
+        {/* QUESTIONS */}
+        {tabIndex === 2 && (
+          <Box>
+            <Button
+              variant="contained"
+              sx={{
+                mb: 3,
+                background: "#f1f1f1",
+                color: "black",
+                borderRadius: "50px",
+                px: 4,
+                py: 1.4,
+                textTransform: "none",
+                fontWeight: 600,
+                boxShadow: "none",
+              }}
+              onClick={() => setShowQuestionModal(true)}
+            >
+              Ask a Question
+            </Button>
+
+            {questions.length === 0 && <Typography>No questions yet.</Typography>}
+
+            <Stack spacing={2}>
+              {questions.map((q) => (
+                <Paper key={q.question_id} sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography fontWeight={700}>{q.name} asks:</Typography>
+                  <Typography sx={{ mt: 1 }}>{q.question}</Typography>
+                  <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
+                    {new Date(q.created_at).toLocaleDateString()}
+                  </Typography>
+                </Paper>
+              ))}
+            </Stack>
+          </Box>
+        )}
+      </Box>
+
+      {/* MODALS */}
+      {showReviewModal && (
+        <ReviewModal
+          productId={id}
+          onClose={() => setShowReviewModal(false)}
+          onAdded={(newReview) => setReviews([newReview, ...reviews])}
+        />
+      )}
+
+      {showQuestionModal && (
+        <QuestionModal
+          productId={id}
+          onClose={() => setShowQuestionModal(false)}
+          onAdded={(newQ) => setQuestions([newQ, ...questions])}
+        />
+      )}
+    </Box>
   );
 }
 

@@ -1,21 +1,30 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../components/CartContext";
 import ProductCard from "../components/ProductCard";
 import { supabase } from "../pages/SupabaseClient";
-import FeaturedCarousel from "../components/FeaturedCarousel";
-import hero from "../assets/banners/hero3.jpeg";
+
+// Hero images
+import hero3 from "../assets/banners/hero3.jpeg";
+import hero4 from "../assets/banners/hero4.jpeg";
+import hero5 from "../assets/banners/hero5.jpeg";
+import hero6 from "../assets/banners/hero6.jpeg";
+import hero7 from "../assets/banners/hero7.jpeg";
 
 export default function LandingPage() {
   const { addToCart } = useContext(CartContext);
   const navigate = useNavigate();
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [currentHero, setCurrentHero] = useState(0);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   const isMobile = windowWidth < 768;
+  const heroImages = [hero3, hero4, hero5, hero6, hero7];
 
   useEffect(() => {
     fetchData();
@@ -23,6 +32,23 @@ export default function LandingPage() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHero((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Auto-scroll carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (featuredProducts.length > 0) {
+        handleNext();
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [featuredProducts, carouselIndex]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -90,16 +116,39 @@ export default function LandingPage() {
     );
   }
 
-  // Hero height
   const heroHeight = isMobile ? 260 : windowWidth < 1340 ? 300 : 350;
-
-  // Button size
   const buttonStyle = isMobile
     ? { padding: "8px 16px", fontSize: "14px" }
     : { padding: "12px 24px", fontSize: "16px" };
-
-  // Button vertical position adjustment for mobile
   const buttonTop = isMobile ? "45%" : "50%";
+
+  // Reorder categories: Kitchen and Home (category_id 4) first
+  const orderedCategories = [...categories].sort((a, b) =>
+    a.category_id === 4 ? -1 : b.category_id === 4 ? 1 : 0
+  );
+
+  const carouselVisible = isMobile ? 2 : windowWidth < 1024 ? 3 : 4;
+
+  const handlePrev = () => {
+    setCarouselIndex(
+      (prev) =>
+        (prev - 1 + featuredProducts.length) % featuredProducts.length
+    );
+  };
+
+  const handleNext = () => {
+    setCarouselIndex((prev) => (prev + 1) % featuredProducts.length);
+  };
+
+  const getVisibleProducts = () => {
+    const productsToShow = [];
+    for (let i = 0; i < carouselVisible; i++) {
+      productsToShow.push(
+        featuredProducts[(carouselIndex + i) % featuredProducts.length]
+      );
+    }
+    return productsToShow;
+  };
 
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
@@ -109,24 +158,28 @@ export default function LandingPage() {
           position: "relative",
           width: "100%",
           height: heroHeight,
-          backgroundColor: "#fff",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
           overflow: "hidden",
         }}
       >
-        <img
-          src={hero}
-          alt="Hero Banner"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            objectPosition: "top",
-            display: "block",
-          }}
-        />
+        {heroImages.map((img, index) => (
+          <img
+            key={index}
+            src={img}
+            alt={`Hero ${index}`}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "top",
+              transition: "opacity 2s ease-in-out",
+              opacity: index === currentHero ? 1 : 0,
+            }}
+          />
+        ))}
+
         <div
           style={{
             position: "absolute",
@@ -169,7 +222,7 @@ export default function LandingPage() {
             scrollbarColor: "#888 transparent",
           }}
         >
-          {categories.map((category) => (
+          {orderedCategories.map((category) => (
             <a
               key={category.category_id}
               href={`#category-${category.category_id}`}
@@ -194,8 +247,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURED PRODUCTS */}
-      <section style={{ marginTop: 48, padding: "0 16px" }}>
+      {/* FEATURED PRODUCTS CAROUSEL */}
+      <section style={{ marginTop: 48, padding: "0 16px", position: "relative" }}>
         <h2
           style={{
             fontSize: isMobile ? 24 : 32,
@@ -205,25 +258,67 @@ export default function LandingPage() {
         >
           Featured Products
         </h2>
-        {featuredProducts.length > 0 ? (
-          <FeaturedCarousel products={featuredProducts} addToCart={addToCart} />
-        ) : (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "40px 20px",
-              background: "#f9f9f9",
-              borderRadius: "8px",
-              color: "#666",
-            }}
-          >
-            No products available at the moment.
-          </div>
-        )}
+
+        <button
+          onClick={handlePrev}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: 0,
+            transform: "translateY(-50%)",
+            zIndex: 2,
+            background: "rgba(0,0,0,0.5)",
+            color: "#fff",
+            border: "none",
+            borderRadius: "50%",
+            width: 40,
+            height: 40,
+            cursor: "pointer",
+          }}
+        >
+          ◀
+        </button>
+
+        <button
+          onClick={handleNext}
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: 0,
+            transform: "translateY(-50%)",
+            zIndex: 2,
+            background: "rgba(0,0,0,0.5)",
+            color: "#fff",
+            border: "none",
+            borderRadius: "50%",
+            width: 40,
+            height: 40,
+            cursor: "pointer",
+          }}
+        >
+          ▶
+        </button>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 16,
+            overflow: "hidden",
+          }}
+        >
+          {getVisibleProducts().map((product) => (
+            <div
+              key={product.product_id}
+              style={{ minWidth: `${100 / carouselVisible}%` }}
+            >
+              <ProductCard product={product} addToCart={addToCart} />
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* CATEGORY SECTIONS */}
-      {categories.map((category) => {
+      {orderedCategories.map((category) => {
         const categoryProducts = products.filter(
           (product) => product.category_id === category.category_id
         );

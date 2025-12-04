@@ -150,7 +150,7 @@ function Navbar() {
               </Link>
 
               {/* Categories Dropdown */}
-              <div
+              {/* <div
                 style={{ position: "relative", cursor: "pointer" }}
                 onMouseEnter={() => setDropdownOpen(true)}
                 onMouseLeave={() => setDropdownOpen(false)}
@@ -190,7 +190,7 @@ function Navbar() {
                     ))}
                   </ul>
                 )}
-              </div>
+              </div> */}
 
               <Link
                 to="/about"
