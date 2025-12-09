@@ -10,28 +10,41 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
   const { wishlist, toggleWishlist } = useContext(WishlistContext);
   const id = product.product_id;
 
-  // ✅ UNIVERSAL IMAGE LOADER (Vercel + Vite Compatible)
-  const resolveImage = (path) => {
+  // ✅ SAME IMAGE LOADER AS ProductDetails.jsx
+  const createImageUrl = (filename) => {
     try {
-      // When running locally with Vite:
-      return new URL(path, import.meta.url).href;
+      return new URL(`/src/assets/products/${filename}`, import.meta.url).href;
     } catch {
-      // On Vercel / production:
-      return path.replace("/src", "");
+      return null;
     }
   };
 
-  // ✅ Build all possible image paths using your naming system
+  // ✅ Build image paths using the SAME logic as ProductDetails
   const images = useMemo(() => {
-    return [
-      resolveImage(`/src/assets/products/${id}.jpeg`),
-      resolveImage(`/src/assets/products/${id}-1.jpeg`),
-      resolveImage(`/src/assets/products/${id}-2.jpeg`),
-      resolveImage(`/src/assets/products/${id}-3.jpeg`),
-    ];
+    const imageUrls = [];
+    const possibleFiles = [`${id}.jpeg`, `${id}.jpg`, `${id}.png`];
+
+    // Add numbered variants (1-3 for ProductCard, similar to ProductDetails' 1-10)
+    for (let i = 1; i <= 3; i++) {
+      ["-", "_"].forEach((sep) => {
+        ["jpeg", "jpg", "png"].forEach((ext) => {
+          possibleFiles.push(`${id}${sep}${i}.${ext}`);
+        });
+      });
+    }
+
+    // Try to create URLs for each possible file
+    possibleFiles.forEach((file) => {
+      const url = createImageUrl(file);
+      if (url) imageUrls.push(url);
+    });
+
+    // Remove duplicates and ensure we have at least one image
+    const uniqueImages = [...new Set(imageUrls)];
+    return uniqueImages.length > 0 ? uniqueImages : ["https://via.placeholder.com/300"];
   }, [id]);
 
-  // Show 2nd image on hover (if it exists)
+  // ✅ Keep existing hover logic - show 2nd image on hover if available
   const displayedImage = hover && images.length > 1 ? images[1] : images[0];
 
   const isWishlisted = wishlist.includes(id);
@@ -83,7 +96,6 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
         setIconHover(null);
       }}
     >
-
       {/* HOVER ICONS */}
       {hover && (
         <div
@@ -147,7 +159,6 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
       {/* PRODUCT LINK */}
       <Link to={`/product/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
         <div>
-
           {/* PRODUCT IMAGE */}
           <div
             style={{
@@ -249,7 +260,6 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
     </div>
   );
 }
-
 
 // import React, { useState, useContext } from "react";
 // import { Link } from "react-router-dom";
