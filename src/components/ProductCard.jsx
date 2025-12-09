@@ -182,7 +182,7 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
               position: "relative", // Added for debugging
             }}
           >
-            DEBUG INFO - Remove after testing
+           
             {/* <div style={{
               position: "absolute",
               top: "5px",
