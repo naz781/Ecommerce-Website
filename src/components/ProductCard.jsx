@@ -10,34 +10,29 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
   const { wishlist, toggleWishlist } = useContext(WishlistContext);
   const id = product.product_id;
 
-  // ✅ VITE COMPATIBLE IMAGE LOADER
-  const resolveImage = (id, index = 0, ext = "jpeg") => {
+  // ✅ UNIVERSAL IMAGE LOADER (Vercel + Vite Compatible)
+  const resolveImage = (path) => {
     try {
-      return new URL(
-        `/src/assets/products/${id}${index ? `-${index}` : ""}.${ext}`,
-        import.meta.url
-      ).href;
+      // When running locally with Vite:
+      return new URL(path, import.meta.url).href;
     } catch {
-      return "https://via.placeholder.com/300";
+      // On Vercel / production:
+      return path.replace("/src", "");
     }
   };
 
-  // ✅ Build images array (support multiple indexes & extensions)
+  // ✅ Build all possible image paths using your naming system
   const images = useMemo(() => {
-    const exts = ["jpeg", "jpg", "png"];
-    const imgs = [];
-    for (let i = 0; i <= 3; i++) {
-      exts.forEach(ext => {
-        const url = resolveImage(id, i, ext);
-        imgs.push(url);
-      });
-    }
-    // remove duplicates
-    return [...new Set(imgs)];
+    return [
+      resolveImage(`/src/assets/products/${id}.jpeg`),
+      resolveImage(`/src/assets/products/${id}-1.jpeg`),
+      resolveImage(`/src/assets/products/${id}-2.jpeg`),
+      resolveImage(`/src/assets/products/${id}-3.jpeg`),
+    ];
   }, [id]);
 
-  // Show second image on hover if available
-  const displayedImage = hover && images[1] ? images[1] : images[0];
+  // Show 2nd image on hover (if it exists)
+  const displayedImage = hover && images.length > 1 ? images[1] : images[0];
 
   const isWishlisted = wishlist.includes(id);
 
@@ -88,6 +83,7 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
         setIconHover(null);
       }}
     >
+
       {/* HOVER ICONS */}
       {hover && (
         <div
@@ -139,7 +135,11 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
                 {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
               </div>
             )}
-            {isWishlisted ? <FaStar size={16} color="#facc15" /> : <FaRegStar size={16} />}
+            {isWishlisted ? (
+              <FaStar size={16} color="#facc15" />
+            ) : (
+              <FaRegStar size={16} />
+            )}
           </div>
         </div>
       )}
@@ -147,6 +147,7 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
       {/* PRODUCT LINK */}
       <Link to={`/product/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
         <div>
+
           {/* PRODUCT IMAGE */}
           <div
             style={{
@@ -161,7 +162,9 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
             <img
               src={displayedImage}
               alt={product.name}
-              onError={(e) => (e.target.src = "https://via.placeholder.com/300")}
+              onError={(e) => {
+                e.target.src = "https://via.placeholder.com/300";
+              }}
               style={{
                 width: "100%",
                 height: "100%",
