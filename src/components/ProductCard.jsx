@@ -10,7 +10,7 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
   const { wishlist, toggleWishlist } = useContext(WishlistContext);
   const id = product.product_id;
 
-  // ✅ SAME IMAGE LOADER AS ProductDetails.jsx
+  // ✅ Simple image loader for your exact pattern: 123.jpeg and 123-1.jpeg
   const createImageUrl = (filename) => {
     try {
       return new URL(`/src/assets/products/${filename}`, import.meta.url).href;
@@ -19,32 +19,43 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
     }
   };
 
-  // ✅ Build image paths using the SAME logic as ProductDetails
+  // ✅ SIMPLE VERSION: Only look for your exact pattern
   const images = useMemo(() => {
     const imageUrls = [];
-    const possibleFiles = [`${id}.jpeg`, `${id}.jpg`, `${id}.png`];
-
-    // Add numbered variants (1-3 for ProductCard, similar to ProductDetails' 1-10)
-    for (let i = 1; i <= 3; i++) {
-      ["-", "_"].forEach((sep) => {
-        ["jpeg", "jpg", "png"].forEach((ext) => {
-          possibleFiles.push(`${id}${sep}${i}.${ext}`);
-        });
-      });
+    
+    // Try main image: 123.jpeg
+    const mainImage = createImageUrl(`${id}.jpeg`);
+    if (mainImage) {
+      imageUrls.push(mainImage);
     }
-
-    // Try to create URLs for each possible file
-    possibleFiles.forEach((file) => {
-      const url = createImageUrl(file);
-      if (url) imageUrls.push(url);
-    });
-
-    // Remove duplicates and ensure we have at least one image
-    const uniqueImages = [...new Set(imageUrls)];
-    return uniqueImages.length > 0 ? uniqueImages : ["https://via.placeholder.com/300"];
+    
+    // Try hover image: 123-1.jpeg
+    const hoverImage = createImageUrl(`${id}-1.jpeg`);
+    if (hoverImage) {
+      imageUrls.push(hoverImage);
+    }
+    
+    // Try alternative extension: 123.jpg and 123-1.jpg
+    const mainImageAlt = createImageUrl(`${id}.jpg`);
+    if (mainImageAlt && !imageUrls.includes(mainImageAlt)) {
+      imageUrls.push(mainImageAlt);
+    }
+    
+    const hoverImageAlt = createImageUrl(`${id}-1.jpg`);
+    if (hoverImageAlt && !imageUrls.includes(hoverImageAlt)) {
+      imageUrls.push(hoverImageAlt);
+    }
+    
+    // Fallback to placeholder if no images found
+    if (imageUrls.length === 0) {
+      imageUrls.push("https://via.placeholder.com/300");
+    }
+    
+    console.log(`Product ${id} - Images found:`, imageUrls.length, imageUrls); // Debug
+    return imageUrls;
   }, [id]);
 
-  // ✅ Keep existing hover logic - show 2nd image on hover if available
+  // ✅ Show 2nd image on hover if available
   const displayedImage = hover && images.length > 1 ? images[1] : images[0];
 
   const isWishlisted = wishlist.includes(id);
@@ -168,12 +179,30 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
               justifyContent: "center",
               alignItems: "center",
               transition: "0.3s",
+              position: "relative", // Added for debugging
             }}
           >
+            {/* DEBUG INFO - Remove after testing */}
+            <div style={{
+              position: "absolute",
+              top: "5px",
+              left: "5px",
+              background: "rgba(0,0,0,0.7)",
+              color: "white",
+              padding: "2px 6px",
+              borderRadius: "4px",
+              fontSize: "10px",
+              zIndex: 5,
+              display: hover ? "block" : "none",
+            }}>
+              {images.length > 1 ? `Hover: ${images[1]}` : "No hover image"}
+            </div>
+            
             <img
               src={displayedImage}
               alt={product.name}
               onError={(e) => {
+                console.error(`Failed to load: ${displayedImage}`);
                 e.target.src = "https://via.placeholder.com/300";
               }}
               style={{
@@ -182,7 +211,7 @@ export default function ProductCard({ product, addToCart, onQuickView }) {
                 objectFit: "contain",
                 padding: "16px",
                 opacity: hover ? 0.85 : 1,
-                transition: "0.3s",
+                transition: "opacity 0.3s ease",
               }}
             />
           </div>
