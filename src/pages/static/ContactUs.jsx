@@ -22,7 +22,7 @@ export default function ContactUs() {
           fontSize: { xs: "0.7rem", md: "0.75rem" },
         }}
       >
-        INFORMATION ABOUT US
+  
       </Typography>
 
       <Typography
@@ -34,7 +34,7 @@ export default function ContactUs() {
           fontSize: { xs: "1.2rem", md: "1.6rem" },
         }}
       >
-        Contact Us For Any Questions
+        Contact Us 
       </Typography>
 
       {/* Form */}

@@ -186,7 +186,7 @@ export default function TermsAndConditions() {
           <br />
           +1 (732) 474-3377
           <br />
-          [Insert Contact Form URL]
+        
         </Typography>
       </Box>
     </Box>

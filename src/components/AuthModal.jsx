@@ -12,53 +12,62 @@ export default function AuthModal({ onClose }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
+  // Error message state
+  const [errorMessage, setErrorMessage] = useState("");
+
   const handleLogin = async () => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+    setErrorMessage(""); // Clear previous error
 
-  if (error) return alert(error.message);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (mergeCart && guestId) {
-    await mergeCart(guestId, data.user.id);
-  }
+    if (error) {
+      setErrorMessage("You must provide a valid email or password.");
+      return;
+    }
 
-  setUser(data.user);
+    if (mergeCart && guestId) {
+      await mergeCart(guestId, data.user.id);
+    }
 
-  // Call onClose with "loggedIn = true" so LandingNavbar can navigate
-  onClose(true);
-};
+    setUser(data.user);
+    onClose(true);
+  };
 
   const handleSignup = async () => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name: name,
-        email: email, // storing email inside metadata too
+    setErrorMessage(""); // Clear previous error
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name,
+          email: email,
+        }
       }
-    }
-  });
-
-  if (error) return alert(error.message);
-
-  const authId = data.user?.id || data.session?.user?.id;
-
-  // OPTIONAL: If you still want to insert into users_test table
-  if (authId) {
-    await supabase.from("users_test").insert({
-      auth_user_id: authId,
-      name: name,
-      email: email,
     });
-  }
 
-  setUser(data.user);
-  onClose();
-};
+    if (error) {
+      setErrorMessage(error.message);
+      return;
+    }
 
+    const authId = data.user?.id || data.session?.user?.id;
+
+    if (authId) {
+      await supabase.from("users_test").insert({
+        auth_user_id: authId,
+        name: name,
+        email: email,
+      });
+    }
+
+    setUser(data.user);
+    onClose();
+  };
 
   return (
     <div
@@ -129,7 +138,10 @@ export default function AuthModal({ onClose }) {
                   cursor: "pointer",
                   color: "#000",
                 }}
-                onClick={() => setMode("signup")}
+                onClick={() => {
+                  setMode("signup");
+                  setErrorMessage("");
+                }}
               >
                 Sign up for free
               </span>
@@ -143,7 +155,10 @@ export default function AuthModal({ onClose }) {
                   cursor: "pointer",
                   color: "#000",
                 }}
-                onClick={() => setMode("login")}
+                onClick={() => {
+                  setMode("login");
+                  setErrorMessage("");
+                }}
               >
                 Log in
               </span>
@@ -153,7 +168,6 @@ export default function AuthModal({ onClose }) {
 
         {/* FORM */}
         <div>
-          {/* SIGNUP NAME FIELD */}
           {mode === "signup" && (
             <input
               type="text"
@@ -171,7 +185,6 @@ export default function AuthModal({ onClose }) {
             />
           )}
 
-          {/* EMAIL */}
           <input
             type="email"
             placeholder="Your username or email"
@@ -187,7 +200,6 @@ export default function AuthModal({ onClose }) {
             }}
           />
 
-          {/* PASSWORD */}
           <input
             type="password"
             placeholder="Password"
@@ -203,7 +215,6 @@ export default function AuthModal({ onClose }) {
             }}
           />
 
-          {/* LOGIN OPTIONS */}
           {mode === "login" && (
             <div
               style={{
@@ -223,7 +234,6 @@ export default function AuthModal({ onClose }) {
             </div>
           )}
 
-          {/* SIGNUP POLICY */}
           {mode === "signup" && (
             <label
               style={{ fontSize: "14px", display: "block", marginBottom: "15px" }}
@@ -231,6 +241,25 @@ export default function AuthModal({ onClose }) {
               <input type="checkbox" /> Yes, I agree with Privacy Policy and
               Terms of Use
             </label>
+          )}
+
+          {/* ERROR MESSAGE */}
+          {errorMessage && (
+            <div
+              style={{
+                background: "#ffe6e6",
+                color: "#cc0000",
+                padding: "12px 16px",
+                borderRadius: "10px",
+                marginBottom: "15px",
+                fontSize: "14px",
+                textAlign: "center",
+                fontWeight: "500",
+                border: "1px solid #ffb3b3",
+              }}
+            >
+              {errorMessage}
+            </div>
           )}
 
           {/* SUBMIT BUTTON */}

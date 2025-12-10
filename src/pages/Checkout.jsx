@@ -13,6 +13,8 @@ import CheckoutSummary from "../components/Checkout/CheckoutSummary";
 import CheckoutPromo from "../components/Checkout/CheckoutPromo";
 import CheckoutGuest from "../components/Checkout/CheckoutGuest";
 
+import Swal from "sweetalert2";
+
 import paypal from "../assets/Logos/Paypal.jpeg";
 import karna from "../assets/Logos/karna.jpeg";
 import afterpay from "../assets/Logos/afterpay.jpeg";
@@ -71,10 +73,19 @@ export default function Checkout() {
     (sum, item) => sum + item.products.price * item.quantity,
     0
   );
+  const showLoginAlert = () => {
+      Swal.fire({
+    title: "Login Required",
+    text: "Please log in to continue.",
+    icon: "undefined",
+    confirmButtonText: "OK",
+    confirmButtonColor: "#000000ff"  // ← change color here
+  });
+}
 
   // ---------------- Order Functions ----------------
   const placeOrder = async () => {
-    if (!user) return alert("You must be logged in to place an order.");
+    if (!user) return showLoginAlert();
     setLoading(true);
 
     const subtotalLocal = cartItems.reduce(
@@ -164,7 +175,7 @@ export default function Checkout() {
         backgroundColor: "#f9fafb",
       }}
     >
-      <CheckoutGuest />
+      {/* <CheckoutGuest /> */}
 
       <Grid container spacing={3}>
         {/* LEFT COLUMN: CHECKOUT FORM */}
@@ -178,14 +189,14 @@ export default function Checkout() {
             reopenSection={reopenSection}
           />
 
-          <CheckoutShipping
+          {/* <CheckoutShipping
             shippingMethod={shippingMethod}
             completed={completed}
             activeStep={activeStep}
             saveShippingContinue={saveShippingContinue}
             reopenSection={reopenSection}
             cartItems={cartItems}
-          />
+          /> */}
 
           <CheckoutPayment
             paymentMethod={paymentMethod}

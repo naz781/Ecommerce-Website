@@ -3,128 +3,123 @@ import { useNavigate } from "react-router-dom";
 import { CartContext } from "../components/CartContext";
 import ProductCard from "../components/ProductCard";
 import { supabase } from "../pages/SupabaseClient";
-import HeroBanner from "../components/Landing/HeroSection";
+
+import LandingNavbar from "../components/Landing/LandingNavbar";
+import MainBanner from "../components/Landing/MainBanner";
+import LandingProductCard from "../components/Landing/LandingProductCard";
+
+import SideBySide from "../components/Landing/SideBySide";
 import BrandStatement from "../components/Landing/BrandStatements";
-import Testimonials from "../components/Landing/Testimonials";
 import WhyShopWithUs from "../components/Landing/WhyShopWithUs";
-// import ProductSlider from "../components/Landing/ProductSlider";
-import ProductSlider from "../components/Landing/ProductSlider";
-import hero3 from "../assets/banners/flowers.jpeg";
-import hero4 from "../assets/banners/hero4.jpeg";
-import hero5 from "../assets/banners/hero5.jpeg";
-import hero6 from "../assets/banners/hero6.jpeg";
-import hero7 from "../assets/banners/hero7.jpeg";
 
 import product1 from "../assets/banners/product1banner.png";
 import product2 from "../assets/banners/product2banner.png";
 import product3 from "../assets/banners/product3banner.png";
 
-import SideBySide from "../components/Landing/SideBySide";
-import LandingNavbar from "../components/Landing/LandingNavbar";
-import MainBanner from "../components/Landing/MainBanner";
-import LandingProductCard from "../components/Landing/LandingProductCard";  // ⭐ NEW IMPORT
-
 export default function LandingPage() {
   const { addToCart } = useContext(CartContext);
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = windowWidth < 768;
 
-  const [currentHero, setCurrentHero] = useState(0);
-  const heroImages = [hero3, hero4, hero5, hero6, hero7];
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+
+  const visibleCount = isMobile ? 2 : 4;
+  const featuredVisibleCount = isMobile ? 2 : 4;
 
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const visibleCount = isMobile ? 2 : 4;
-  const [slideIndex, setSlideIndex] = useState(0);
-
-  // ⭐ NEW: Recommended Products State
-  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const FEATURED_IDS = [1, 2, 5, 23, 25, 26, 13, 8];
 
   useEffect(() => {
-    fetchData();
-    fetchRecommendations(); // ⭐ load recommended products
+    fetchCategories();
+    fetchAllProducts();
+    fetchFeaturedProducts();
 
     const resizeHandler = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", resizeHandler);
     return () => window.removeEventListener("resize", resizeHandler);
   }, []);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentHero((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // ⭐ FETCH RECOMMENDATIONS
-  async function fetchRecommendations() {
-    const { data, error } = await supabase.from("products").select("*").limit(12);
-    if (!error && data) {
-      const shuffled = data.sort(() => 0.5 - Math.random());
-      setRecommendedProducts(shuffled.slice(0, 6));
-    }
+  async function fetchCategories() {
+    const { data } = await supabase.from("categories").select("*");
+    setCategories(data || []);
   }
 
-  const fetchData = async () => {
+  async function fetchAllProducts() {
     setIsLoading(true);
-    try {
-      const { data: catData } = await supabase.from("categories").select("*");
-      setCategories(catData || []);
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-      const { data: prodData } = await supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      const categoryMap = {};
-      (catData || []).forEach((cat) => {
-        categoryMap[cat.category_id] = cat.name;
-      });
-
-      const extended = (prodData || []).map((p) => ({
-        ...p,
-        staticImages: [`/assets/products/${p.product_id}/main.jpeg`],
-        categoryName: categoryMap[p.category_id] || "Uncategorized",
-      }));
-
-      setProducts(extended);
-    } catch (err) {
-      console.error("Error loading:", err);
-    }
+    setAllProducts(data || []);
     setIsLoading(false);
-  };
+  }
 
-  const filteredProducts =
+  async function fetchFeaturedProducts() {
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .in("product_id", FEATURED_IDS);
+
+    setFeaturedProducts(data || []);
+  }
+
+  const filteredAllProducts =
     selectedCategory === "all"
-      ? products
-      : products.filter(
+      ? allProducts
+      : allProducts.filter(
           (p) => String(p.category_id) === String(selectedCategory)
         );
 
-  const handleNext = () => {
-    setSlideIndex((prev) =>
-      prev + 1 >= filteredProducts.length ? 0 : prev + 1
-    );
-  };
-
-  const handlePrev = () => {
-    setSlideIndex((prev) =>
-      prev - 1 < 0 ? filteredProducts.length - 1 : prev - 1
-    );
-  };
-
   const getVisibleProducts = () => {
-    if (filteredProducts.length === 0) return [];
+    if (filteredAllProducts.length === 0) return [];
     return Array.from({ length: visibleCount }).map(
-      (_, i) => filteredProducts[(slideIndex + i) % filteredProducts.length]
+      (_, i) =>
+        filteredAllProducts[(slideIndex + i) % filteredAllProducts.length]
     );
   };
+
+  const getVisibleFeatured = () => {
+    if (featuredProducts.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < featuredVisibleCount; i++) {
+      const index = (featuredIndex + i) % featuredProducts.length;
+      result.push(featuredProducts[index]);
+    }
+    return result;
+  };
+
+  const handleNextFeatured = () => {
+    if (featuredProducts.length <= featuredVisibleCount) return;
+    setFeaturedIndex((prev) => (prev + 1) % featuredProducts.length);
+  };
+
+  const handlePrevFeatured = () => {
+    if (featuredProducts.length <= featuredVisibleCount) return;
+    setFeaturedIndex((prev) => 
+      prev === 0 ? featuredProducts.length - 1 : prev - 1
+    );
+  };
+
+  // Auto-slide functionality
+  useEffect(() => {
+    if (featuredProducts.length <= featuredVisibleCount) return;
+    
+    const interval = setInterval(() => {
+      handleNextFeatured();
+    }, 5000); // Auto-slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [featuredProducts.length, featuredVisibleCount, featuredIndex]);
 
   if (isLoading) {
     return <div style={styles.loader}>Loading products...</div>;
@@ -134,6 +129,7 @@ export default function LandingPage() {
     <>
       <LandingNavbar />
 
+      {/* HERO BANNER */}
       <MainBanner
         heroImages={[
           {
@@ -160,177 +156,207 @@ export default function LandingPage() {
         ]}
       />
 
-     
-
-      <section style={{ textAlign: "center", marginTop: 40 }}>
+      {/* ALL PRODUCTS SECTION */}
+      <section style={{ textAlign: "center", marginTop: 40, marginBottom: 10 }}>
         <h2 style={styles.sectionTitle}>All Products</h2>
       </section>
 
-      {/* REST OF YOUR ORIGINAL CODE BELOW — UNCHANGED */}
-      <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-        {/* CATEGORY FILTER */}
-        <section style={{ marginTop: 30 }}>
-          {isMobile ? (
-            <div style={styles.mobileBubbleWrapper}>
-              {["all", ...categories.map((c) => String(c.category_id))].map(
-                (catId, index) => {
-                  const catName =
-                    catId === "all"
-                      ? "All"
-                      : categories.find((c) => String(c.category_id) === catId)
-                          ?.name;
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => setSelectedCategory(catId)}
-                      style={{
-                        ...styles.mobileBubble,
-                        backgroundColor:
-                          selectedCategory === catId ? "#000" : "#f0f0f0",
-                        color: selectedCategory === catId ? "#fff" : "#333",
-                      }}
-                    >
-                      {catName}
-                    </div>
-                  );
-                }
-              )}
-            </div>
-          ) : (
-            <div style={styles.tabsWrapper}>
-              <div style={styles.tabsContainer}>
+      {/* CATEGORY NAVBAR */}
+      <section style={{ marginTop: 30 }}>
+        {isMobile ? (
+          <div style={styles.mobileBubbleWrapper}>
+            {["all", ...categories.map((c) => String(c.category_id))].map(
+              (catId, index) => {
+                const catName =
+                  catId === "all"
+                    ? "All"
+                    : categories.find((c) => String(c.category_id) === catId)
+                        ?.name;
+
+                return (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      setSelectedCategory(catId);
+                      setSlideIndex(0);
+                    }}
+                    style={{
+                      ...styles.mobileBubble,
+                      backgroundColor:
+                        selectedCategory === catId ? "#000" : "#f0f0f0",
+                      color: selectedCategory === catId ? "#fff" : "#333",
+                    }}
+                  >
+                    {catName}
+                  </div>
+                );
+              }
+            )}
+          </div>
+        ) : (
+          <div style={styles.tabsWrapper}>
+            <div style={styles.tabsContainer}>
+              <div
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setSlideIndex(0);
+                }}
+                style={{
+                  ...styles.tab,
+                  borderBottom:
+                    selectedCategory === "all"
+                      ? "3px solid black"
+                      : "3px solid transparent",
+                  color: selectedCategory === "all" ? "black" : "#777",
+                }}
+              >
+                All
+              </div>
+
+              {categories.map((cat) => (
                 <div
+                  key={cat.category_id}
                   onClick={() => {
-                    setSelectedCategory("all");
+                    setSelectedCategory(String(cat.category_id));
                     setSlideIndex(0);
                   }}
                   style={{
                     ...styles.tab,
                     borderBottom:
-                      selectedCategory === "all"
+                      selectedCategory === String(cat.category_id)
                         ? "3px solid black"
                         : "3px solid transparent",
-                    color: selectedCategory === "all" ? "black" : "#777",
+                    color:
+                      selectedCategory === String(cat.category_id)
+                        ? "black"
+                        : "#777",
                   }}
                 >
-                  All Products
+                  {cat.name}
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
-                {categories.map((cat) => (
-                  <div
-                    key={cat.category_id}
-                    onClick={() => {
-                      setSelectedCategory(String(cat.category_id));
-                      setSlideIndex(0);
-                    }}
-                    style={{
-                      ...styles.tab,
-                      borderBottom:
-                        selectedCategory === String(cat.category_id)
-                          ? "3px solid black"
-                          : "3px solid transparent",
-                      color:
-                        selectedCategory === String(cat.category_id)
-                          ? "black"
-                          : "#777",
-                    }}
-                  >
-                    {cat.name}
-                  </div>
-                ))}
+      {/* ALL PRODUCTS SLIDER */}
+      <section style={{ marginTop: 20, marginBottom: 10, padding: "0 0px" }}>
+        {isMobile ? (
+          <div style={styles.mobileGrid}>
+            {filteredAllProducts.slice(0, 4).map((product) => (
+              <div key={product.product_id} style={styles.mobileCardWrapper}>
+                <ProductCard product={product} addToCart={addToCart} />
               </div>
-            </div>
-          )}
-        </section>
+            ))}
+          </div>
+        ) : (
+          <div style={styles.sliderRow}>
+            {getVisibleProducts().map((product) => (
+              <div
+                key={product.product_id}
+                style={{ 
+                  minWidth: `${100 / visibleCount}%`, 
+                  padding: "0 8px",
+                  marginBottom: "30px" // ADDED MARGIN
+                }}
+              >
+                <ProductCard product={product} addToCart={addToCart} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
-        {/* PRODUCT GRID / SLIDER */}
-        <section
-          style={{
-            marginTop: 20,
-            marginLeft: 20,
-            width: "95%",
-            padding: "0 16px",
-            boxSizing: "border-box",
-          }}
-        >
-          {isMobile ? (
-            <div style={styles.mobileGrid}>
-              {filteredProducts.slice(0, 4).map((product) => (
-                <div key={product.product_id} style={styles.mobileCardWrapper}>
-                  <ProductCard product={product} addToCart={addToCart} />
-                </div>
-              ))}
-            </div>
-          ) : (
+      {/* MAIN GRAY BACKGROUND SECTION */}
+      <section style={styles.graySection}>
+        {/* Side sections have their own white backgrounds */}
+        <SideBySide />
+        
+        {/* Add spacing between sections */}
+        <div style={styles.sectionSpacing}>
+          <BrandStatement />
+        </div>
+
+        {/* BEST SELLERS - This needs white background for contrast */}
+        <section style={styles.bestSellersSection}>
+          <h2 style={styles.bestTitle}>Best Sellers</h2>
+          <p style={styles.bestSubtitle}>
+            Our most loved products, hand-picked and trending right now.
+          </p>
+
+          {/* Slider Container */}
+          <div style={styles.sliderContainer}>
+            {/* Left Arrow - Only show if there are more items than visible */}
+            {featuredProducts.length > featuredVisibleCount && (
+              <button 
+                onClick={handlePrevFeatured}
+                style={styles.arrowButton}
+                className="arrow-left"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Slider Row */}
             <div style={styles.sliderRow}>
-              {getVisibleProducts().map((product) => (
+              {getVisibleFeatured().map((product, index) => (
                 <div
-                  key={product.product_id}
+                  key={`${product.product_id}-${index}`}
                   style={{
-                    minWidth: `${100 / visibleCount}%`,
+                    minWidth: `${100 / featuredVisibleCount}%`,
                     padding: "0 8px",
-                    marginBottom: 10,
-                    boxSizing: "border-box",
+                    transition: "transform 0.5s ease",
+                    marginBottom: "30px" // ADDED MARGIN
                   }}
                 >
-                  <ProductCard product={product} addToCart={addToCart} />
+                  <LandingProductCard product={product} />
                 </div>
+              ))}
+            </div>
+
+            {/* Right Arrow - Only show if there are more items than visible */}
+            {featuredProducts.length > featuredVisibleCount && (
+              <button 
+                onClick={handleNextFeatured}
+                style={styles.arrowButton}
+                className="arrow-right"
+              >
+                ›
+              </button>
+            )}
+          </div>
+
+          {/* Dots Indicator */}
+          {featuredProducts.length > featuredVisibleCount && (
+            <div style={styles.dotsContainer}>
+              {Array.from({ 
+                length: Math.ceil(featuredProducts.length / featuredVisibleCount)
+              }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    // Calculate starting index for this dot
+                    const startIndex = i * featuredVisibleCount;
+                    setFeaturedIndex(startIndex);
+                  }}
+                  style={{
+                    ...styles.dot,
+                    backgroundColor: 
+                      Math.floor(featuredIndex / featuredVisibleCount) === i 
+                        ? '#000' 
+                        : '#ccc'
+                  }}
+                />
               ))}
             </div>
           )}
         </section>
-      </div>
-<section
-  style={{
-    background: "#f9fafb",   // Your desired section BG
-    padding: "60px 0",
-  }}
->
-      <SideBySide />
-      <BrandStatement />
 
-<section
-  style={{
-    width: "100%",
-    padding: "60px 0",
-    textAlign: "center",
-    background: "white",
-  }}
->
-  {/* Heading */}
-  <h2
-    style={{
-      fontSize: "34px",
-      fontWeight: "700",
-      fontFamily: "Poppins, sans-serif",
-      marginBottom: "10px",
-      color: "#111",
-    }}
-  >
-    Best Sellers
-  </h2>
-
-  {/* Subtitle (OPTIONAL – looks premium) */}
-  <p
-    style={{
-      fontSize: "16px",
-      fontWeight: "400",
-      color: "#555",
-      maxWidth: "500px",
-      margin: "0 auto 40px auto",
-      lineHeight: "1.6",
-    }}
-  >
-    Our most loved products, hand-picked and trending right now.
-  </p>
-
-  {/* Product Slider */}
-  <div style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 20px" }}>
-    <ProductSlider products={products} />
-  </div>
-</section>
-      {/* <Testimonials /> */}
-      <WhyShopWithUs />
+        {/* Add spacing before WhyShopWithUs */}
+        <div style={styles.sectionSpacing}>
+          <WhyShopWithUs />
+        </div>
       </section>
     </>
   );
@@ -340,7 +366,6 @@ export default function LandingPage() {
 const styles = {
   loader: {
     height: "100vh",
-    width: "100%",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -348,6 +373,95 @@ const styles = {
     color: "#666",
   },
 
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: 600,
+    marginBottom: 20,
+  },
+
+  // Main gray background section
+  graySection: {
+    background: "#f9fafb",
+    width: "100%",
+    paddingTop: "60px",
+    paddingBottom: "60px",
+  },
+
+  // White section within gray area (like Best Sellers)
+  bestSellersSection: {
+    background: "white",
+    width: "100%",
+    padding: "60px 20px",
+    textAlign: "center",
+    marginTop: "60px",
+    marginBottom: "60px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    position: "relative",
+  },
+
+  // Spacing between components within gray section
+  sectionSpacing: {
+    marginTop: "60px",
+    marginBottom: "60px",
+  },
+
+  /* Slider Styles */
+  sliderContainer: {
+    position: "relative",
+    maxWidth: "1400px",
+    margin: "0 auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px 0", // ADDED PADDING
+  },
+
+  arrowButton: {
+    position: "absolute",
+    top: "50%",
+    transform: "translateY(-50%)",
+    background: "white",
+    border: "1px solid #ddd",
+    borderRadius: "50%",
+    width: "48px",
+    height: "48px",
+    fontSize: "24px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    transition: "all 0.3s ease",
+    zIndex: 10,
+  },
+
+  dotsContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "40px", // INCREASED MARGIN
+  },
+
+  dot: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+    border: "none",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  },
+
+  sliderRow: {
+    display: "flex",
+    overflow: "hidden",
+    maxWidth: "1400px",
+    margin: "0 auto",
+    width: "100%",
+  },
+
+  /* Desktop Tabs */
   tabsWrapper: {
     width: "100%",
     display: "flex",
@@ -370,29 +484,7 @@ const styles = {
     whiteSpace: "nowrap",
   },
 
-  sectionTitle: {
-    fontSize: 28,
-    fontWeight: 600,
-    marginBottom: 20,
-  },
-
-  sliderRow: {
-    display: "flex",
-    overflow: "hidden",
-  },
-
-  mobileGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "12px",
-    padding: "0 10px",
-  },
-
-  mobileCardWrapper: {
-    transform: "scale(0.85)",
-    width: "100%",
-  },
-
+  /* Mobile Bubbles */
   mobileBubbleWrapper: {
     display: "grid",
     gridTemplateColumns: "repeat(4, 1fr)",
@@ -413,4 +505,54 @@ const styles = {
     whiteSpace: "nowrap",
     transition: "0.2s",
   },
+
+  mobileGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "12px",
+  },
+
+  mobileCardWrapper: {
+    transform: "scale(0.9)",
+    marginBottom: "20px", // ADDED MARGIN
+  },
+
+  bestTitle: {
+    fontSize: "34px",
+    fontWeight: "700",
+    fontFamily: "Poppins, sans-serif",
+    marginBottom: "10px",
+    color: "#111",
+  },
+
+  bestSubtitle: {
+    fontSize: "16px",
+    fontWeight: "400",
+    color: "#555",
+    maxWidth: "500px",
+    margin: "0 auto 40px auto",
+    lineHeight: "1.6",
+  },
 };
+
+// Add CSS for arrow positioning
+const styleSheet = document.styleSheets[0];
+styleSheet.insertRule(`
+  .arrow-left {
+    left: -24px;
+  }
+`, styleSheet.cssRules.length);
+
+styleSheet.insertRule(`
+  .arrow-right {
+    right: -24px;
+  }
+`, styleSheet.cssRules.length);
+
+styleSheet.insertRule(`
+  .arrow-left:hover, .arrow-right:hover {
+    background: #f8f8f8;
+    border-color: #999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+`, styleSheet.cssRules.length);

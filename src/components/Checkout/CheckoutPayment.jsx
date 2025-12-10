@@ -33,7 +33,7 @@ export default function CheckoutPayment({
     <Paper elevation={1} sx={{ mb: 2, p: 2 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-          3. Payment
+          2. Payment
         </Typography>
 
         {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

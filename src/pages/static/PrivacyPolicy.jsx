@@ -1,7 +1,9 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 export default function PrivacyPolicy() {
+  const navigate=useNavigate();
   return (
     <Box
       sx={{
@@ -216,7 +218,21 @@ export default function PrivacyPolicy() {
         <br />
         <strong>Address:</strong> 6 Hazelwood Court, Jericho, New York 11753
         <br />
-        <strong>Contact Page:</strong> [Insert URL]
+        <strong>
+  <span
+    onClick={() => navigate("/contact-us")}
+    style={{
+      color: "#2563eb",
+      cursor: "pointer",
+      textDecoration: "underline",
+      fontWeight: 600,
+      padding: "2px 4px",
+    }}
+  >Contact Us
+  </span>
+</strong>
+
+        
       </Typography>
     </Box>
   );

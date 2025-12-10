@@ -2,11 +2,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../pages/SupabaseClient";
 import { AuthContext } from "../components/AuthContext";
+import Swal from "sweetalert2"; // ✅ Import SweetAlert2
+import withReactContent from "sweetalert2-react-content";
 
 export const WishlistContext = createContext();
+const MySwal = withReactContent(Swal); // Optional: for React components inside Swal
 
 export function WishlistProvider({ children }) {
-  const { user } = useContext(AuthContext); // <-- GET LOGGED IN USER
+  const { user } = useContext(AuthContext);
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +18,7 @@ export function WishlistProvider({ children }) {
     if (user?.id) {
       fetchWishlist(user.id);
     } else {
-      setWishlist([]); // Empty wishlist for guests
+      setWishlist([]);
       setLoading(false);
     }
   }, [user]);
@@ -38,9 +41,20 @@ export function WishlistProvider({ children }) {
     setLoading(false);
   };
 
+  // ✅ SweetAlert helper
+  const showLoginAlert = () => {
+    Swal.fire({
+  title: "Login Required",
+  text: "Please log in to continue.",
+  icon: "undefined",
+  confirmButtonText: "OK",
+  confirmButtonColor: "#000000ff"  // ← change color here
+});
+  };
+
   // Add item
   const addWishlist = async (productId) => {
-    if (!user) return alert("Please log in to add items to wishlist.");
+    if (!user) return showLoginAlert();
 
     const { error } = await supabase.from("wishlist_test").insert({
       user_id: user.id,
@@ -67,7 +81,7 @@ export function WishlistProvider({ children }) {
 
   // Toggle item (add/remove)
   const toggleWishlist = async (productId) => {
-    if (!user) return alert("Please log in to use wishlist.");
+    if (!user) return showLoginAlert();
 
     if (wishlist.includes(productId)) {
       removeWishlist(productId);

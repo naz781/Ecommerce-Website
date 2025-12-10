@@ -29,7 +29,7 @@ export default function FAQ() {
           fontSize: { xs: "0.7rem", md: "0.75rem" },
         }}
       >
-        INFORMATION QUESTIONS
+       
       </Typography>
 
       <Typography

@@ -1,6 +1,4 @@
 import React from "react";
-
-// Optional: import icons (replace with your images/icons if available)
 import { FaCheckCircle, FaTruck, FaUndo, FaLock } from "react-icons/fa";
 
 export default function ShopWithConfidence() {
@@ -47,21 +45,23 @@ export default function ShopWithConfidence() {
         We ensure the best shopping experience with premium products, fast delivery, easy returns, and secure payment options.
       </p>
 
-      {/* Feature Cards */}
+      {/* Feature Cards - Now in one row */}
       <div
         style={{
           display: "flex",
-          justifyContent: "center",
-          flexWrap: "wrap",
-          gap: "30px",
+          justifyContent: "space-between",
+          alignItems: "stretch",
           width: "100%",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          gap: "20px",
         }}
       >
         {features.map((f, i) => (
           <div
             key={i}
             style={{
-              flex: "0 1 250px",
+              flex: "1",
               background: "white",
               borderRadius: "12px",
               padding: "30px 20px",
@@ -71,6 +71,7 @@ export default function ShopWithConfidence() {
               alignItems: "center",
               transition: "transform 0.3s",
               cursor: "default",
+              minHeight: "250px",
             }}
           >
             <div style={{ marginBottom: 20 }}>{f.icon}</div>
