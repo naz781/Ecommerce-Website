@@ -4,11 +4,12 @@ const RefundReturns = () => {
   return (
     <div
       style={{
-        maxWidth: "800px",
-        margin: "0 auto",
-        padding: "20px",
+        maxWidth: "900px",
+        margin: "2rem auto",
+        padding: "1rem",
         fontFamily: "Arial, sans-serif",
-        lineHeight: 1.6,
+        lineHeight: 1.7,
+        color: "#374151",
       }}
     >
       {/* Heading */}
@@ -16,103 +17,81 @@ const RefundReturns = () => {
         style={{
           textAlign: "center",
           fontSize: "2rem",
-          marginBottom: "30px",
+          marginBottom: "2rem",
+          color: "#1e40af",
         }}
       >
         Refund and Returns Policy
       </h1>
 
-      {/* Content */}
-      {/* <p>
-        This is a sample page.
-      </p> */}
-
+      {/* Overview */}
       <h2>Overview</h2>
       <p>
-        Our refund and returns policy lasts 30 days. If 30 days have passed
-        since your purchase, we can’t offer you a full refund or exchange.
-      </p>
-      <p>
-        To be eligible for a return, your item must be unused and in the same
-        condition that you received it. It must also be in the original
-        packaging.
-      </p>
-      <p>
-        Several types of goods are exempt from being returned. Perishable goods
-        such as food, flowers, newspapers or magazines cannot be returned. We
-        also do not accept products that are intimate or sanitary goods,
-        hazardous materials, or flammable liquids or gases.
+        Our refund and returns policy lasts 30 days. If more than 30 days have passed since your purchase, we are unable to offer a full refund or exchange.
       </p>
 
-      <h3>Additional non-returnable items:</h3>
+      {/* Eligibility for Returns */}
+      <h2>Eligibility for Returns</h2>
+      <p>To be eligible for a return:</p>
       <ul>
+        <li>The item must be unused and in the same condition as received.</li>
+        <li>The item must be in its original packaging.</li>
+      </ul>
+      <p>Non-returnable items include, but are not limited to:</p>
+      <ul>
+        <li>Perishable goods (e.g., food, flowers, newspapers, magazines)</li>
+        <li>Intimate or sanitary products</li>
+        <li>Hazardous materials or flammable liquids/gases</li>
         <li>Gift cards</li>
         <li>Downloadable software products</li>
-        <li>Some health and personal care items</li>
+        <li>Certain health and personal care items</li>
       </ul>
+      <p>A receipt or proof of purchase is required to complete a return.</p>
+      <p><strong>Note:</strong> Do not send items back to the manufacturer.</p>
 
-      <p>To complete your return, we require a receipt or proof of purchase.</p>
-      <p>Please do not send your purchase back to the manufacturer.</p>
-
-      <h3>Partial Refunds</h3>
-      <p>
-        There are certain situations where only partial refunds are granted:
-      </p>
+      {/* Partial Refunds */}
+      <h2>Partial Refunds</h2>
+      <p>Partial refunds may be granted in the following situations:</p>
       <ul>
-        <li>Book with obvious signs of use</li>
-        <li>
-          CD, DVD, VHS tape, software, video game, cassette tape, or vinyl
-          record that has been opened.
-        </li>
-        <li>
-          Any item not in its original condition, is damaged or missing parts
-          for reasons not due to our error.
-        </li>
-        <li>Any item that is returned more than 30 days after delivery</li>
+        <li>Items showing obvious signs of use</li>
+        <li>Opened CDs, DVDs, software, video games, or similar media</li>
+        <li>Items not in original condition, damaged, or missing parts for reasons not caused by us</li>
+        <li>Returns submitted more than 30 days after delivery</li>
       </ul>
 
+      {/* Refunds */}
       <h2>Refunds</h2>
       <p>
-        Once your return is received and inspected, we will send you an email
-        to notify you that we have received your returned item. We will also
-        notify you of the approval or rejection of your refund.
-      </p>
-      <p>
-        If you are approved, your refund will be processed, and a credit will
-        automatically be applied to your original method of payment within a
-        certain number of days.
+        Once your return is received and inspected, we will notify you of the approval or rejection of your refund. If approved, your refund will be processed, and a credit will be applied to your original method of payment within a specified number of days.
       </p>
 
-      <h3>Late or missing refunds</h3>
+      <h3>Late or Missing Refunds</h3>
       <p>
-        If you haven’t received a refund yet, first check your bank account
-        again, then contact your credit card company, and finally your bank. If
-        you still have not received your refund, contact us at {`{email address}`}.
+        If you haven’t received a refund, please first check your bank account, then your credit card statement, and contact your bank if necessary.
       </p>
 
-      <h3>Sale items</h3>
-      <p>Only regular priced items may be refunded. Sale items cannot be refunded.</p>
+      <h3>Sale Items</h3>
+      <p>Only regular-priced items are eligible for refunds. Sale items are non-refundable.</p>
 
       <h3>Exchanges</h3>
       <p>
-        We only replace items if they are defective or damaged. To exchange, email us at {`{email address}`} and send your item to: {`{physical address}`}.
+        We replace items only if they are defective or damaged. Requests for exchanges are evaluated on a case-by-case basis.
       </p>
 
       <h3>Gifts</h3>
       <p>
-        If the item was marked as a gift when purchased and shipped directly to
-        you, you’ll receive a gift credit for the value of your return.
+        If the item was marked as a gift at purchase and shipped directly to you, you will receive a gift credit for the value of your return.
       </p>
 
-      <h3>Shipping returns</h3>
+      <h3>Shipping Returns</h3>
       <p>
-        You will be responsible for paying your own shipping costs for returning
-        your item. Shipping costs are non-refundable. Consider using a trackable
-        shipping service for expensive items.
+        Customers are responsible for paying their own shipping costs when returning items. Shipping fees are non-refundable. We recommend using a trackable shipping service or purchasing shipping insurance for valuable items.
       </p>
 
-      <h3>Need help?</h3>
-      <p>Contact us at {`{email}`} for questions related to refunds and returns.</p>
+      <h3>Need Help?</h3>
+      <p>
+        For any questions related to refunds, returns, or exchanges, please contact our customer support team.
+      </p>
     </div>
   );
 };
