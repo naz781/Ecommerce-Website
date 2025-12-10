@@ -3,282 +3,556 @@ import { useNavigate } from "react-router-dom";
 import { CartContext } from "../components/CartContext";
 import ProductCard from "../components/ProductCard";
 import { supabase } from "../pages/SupabaseClient";
-import FeaturedCarousel from "../components/FeaturedCarousel";
-import hero from "../assets/banners/hero3.jpeg";
+
+import LandingNavbar from "../components/Landing/LandingNavbar";
+import MainBanner from "../components/Landing/MainBanner";
+import LandingProductCard from "../components/Landing/LandingProductCard";
+
+import SideBySide from "../components/Landing/SideBySide";
+import BrandStatement from "../components/Landing/BrandStatements";
+import WhyShopWithUs from "../components/Landing/WhyShopWithUs";
+
+import product1 from "../assets/banners/product1banner.png";
+import product2 from "../assets/banners/product2banner.png";
+import product3 from "../assets/banners/product3banner.png";
 
 export default function LandingPage() {
   const { addToCart } = useContext(CartContext);
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
+  const [allProducts, setAllProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = windowWidth < 768;
 
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+
+  const visibleCount = isMobile ? 2 : 4;
+  const featuredVisibleCount = isMobile ? 2 : 4;
+
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const FEATURED_IDS = [1, 2, 5, 23, 25, 26, 13, 8];
+
   useEffect(() => {
-    fetchData();
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    fetchCategories();
+    fetchAllProducts();
+    fetchFeaturedProducts();
+
+    const resizeHandler = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", resizeHandler);
+    return () => window.removeEventListener("resize", resizeHandler);
   }, []);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      await fetchCategories();
-      await fetchProducts();
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    const { data, error } = await supabase.from("categories").select("*");
-    if (error) {
-      console.error("Error fetching categories:", error);
-      return;
-    }
+  async function fetchCategories() {
+    const { data } = await supabase.from("categories").select("*");
     setCategories(data || []);
-  };
+  }
 
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
+  async function fetchAllProducts() {
+    setIsLoading(true);
+    const { data } = await supabase
       .from("products")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching products:", error);
-      setProducts([]);
-      setFeaturedProducts([]);
-      return;
-    }
-
-    const categoryMap = {};
-    categories.forEach((cat) => {
-      categoryMap[cat.category_id] = cat.name;
-    });
-
-    const extendedProducts = (data || []).map((product) => ({
-      ...product,
-      staticImages: [`/assets/products/${product.product_id}/main.jpeg`],
-      categoryName: categoryMap[product.category_id] || "Uncategorized",
-    }));
-
-    setProducts(extendedProducts);
-    setFeaturedProducts(extendedProducts);
-  };
-
-  if (isLoading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          fontSize: "18px",
-          color: "#666",
-        }}
-      >
-        Loading products...
-      </div>
-    );
+    setAllProducts(data || []);
+    setIsLoading(false);
   }
 
-  // Hero height
-  const heroHeight = isMobile ? 260 : windowWidth < 1340 ? 300 : 350;
+  async function fetchFeaturedProducts() {
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .in("product_id", FEATURED_IDS);
 
-  // Button size
-  const buttonStyle = isMobile
-    ? { padding: "8px 16px", fontSize: "14px" }
-    : { padding: "12px 24px", fontSize: "16px" };
+    setFeaturedProducts(data || []);
+  }
 
-  // Button vertical position adjustment for mobile
-  const buttonTop = isMobile ? "45%" : "50%";
+  const filteredAllProducts =
+    selectedCategory === "all"
+      ? allProducts
+      : allProducts.filter(
+          (p) => String(p.category_id) === String(selectedCategory)
+        );
+
+  const getVisibleProducts = () => {
+    if (filteredAllProducts.length === 0) return [];
+    return Array.from({ length: visibleCount }).map(
+      (_, i) =>
+        filteredAllProducts[(slideIndex + i) % filteredAllProducts.length]
+    );
+  };
+
+  const getVisibleFeatured = () => {
+    if (featuredProducts.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < featuredVisibleCount; i++) {
+      const index = (featuredIndex + i) % featuredProducts.length;
+      result.push(featuredProducts[index]);
+    }
+    return result;
+  };
+
+  const handleNextFeatured = () => {
+    if (featuredProducts.length <= featuredVisibleCount) return;
+    setFeaturedIndex((prev) => (prev + 1) % featuredProducts.length);
+  };
+
+  const handlePrevFeatured = () => {
+    if (featuredProducts.length <= featuredVisibleCount) return;
+    setFeaturedIndex((prev) => 
+      prev === 0 ? featuredProducts.length - 1 : prev - 1
+    );
+  };
+
+  // Auto-slide functionality
+  useEffect(() => {
+    if (featuredProducts.length <= featuredVisibleCount) return;
+    
+    const interval = setInterval(() => {
+      handleNextFeatured();
+    }, 5000); // Auto-slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [featuredProducts.length, featuredVisibleCount, featuredIndex]);
+
+  if (isLoading) {
+    return <div style={styles.loader}>Loading products...</div>;
+  }
 
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-      {/* HERO SECTION */}
-      <section
-        style={{
-          position: "relative",
-          width: "100%",
-          height: heroHeight,
-          backgroundColor: "#fff",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          overflow: "hidden",
-        }}
-      >
-        <img
-          src={hero}
-          alt="Hero Banner"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            objectPosition: "top",
-            display: "block",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: buttonTop,
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <button
-            style={{
-              background: "black",
-              borderRadius: 8,
-              fontWeight: "600",
-              color: "white",
-              cursor: "pointer",
-              transition: "0.3s",
-              ...buttonStyle,
-            }}
-            onMouseEnter={(e) => (e.target.style.background = "#333")}
-            onMouseLeave={(e) => (e.target.style.background = "black")}
-            onClick={() => navigate("/shop")}
-          >
-            Shop Now
-          </button>
-        </div>
+    <>
+      <LandingNavbar />
+
+      {/* HERO BANNER */}
+      <MainBanner
+        heroImages={[
+          {
+            image: product1,
+            title: "Discover elegance for Every Moment",
+            subtitle: "Premium Products",
+            description: "Thoughtfully curated items elevate your lifestyle.",
+            productId: 25,
+          },
+          {
+            image: product2,
+            title: "Luxury Meets Comfort",
+            subtitle: "Handpicked Items for Your Home",
+            description: "Transform your living space into a masterpiece.",
+            productId: 31,
+          },
+          {
+            image: product3,
+            title: "Style That Inspires",
+            subtitle: "Modern Designs for Modern Living",
+            description: "Experience beauty, quality, and elegance.",
+            productId: 30,
+          },
+        ]}
+      />
+
+      {/* ALL PRODUCTS SECTION */}
+      <section style={{ textAlign: "center", marginTop: 40, marginBottom: 10 }}>
+        <h2 style={styles.sectionTitle}>All Products</h2>
       </section>
 
-      {/* CATEGORY SCROLL */}
-      <section style={{ marginTop: 16, padding: "0 16px" }}>
-        <h2 style={{ fontSize: 24, fontWeight: 600, marginBottom: 16 }}>
-          Shop by Category
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            gap: 16,
-            overflowX: "auto",
-            padding: "8px 0",
-            scrollbarWidth: "thin",
-            scrollbarColor: "#888 transparent",
-          }}
-        >
-          {categories.map((category) => (
-            <a
-              key={category.category_id}
-              href={`#category-${category.category_id}`}
-              style={{
-                flexShrink: 0,
-                padding: "12px 24px",
-                borderRadius: 50,
-                background: "#f5f5f5",
-                fontWeight: 500,
-                cursor: "pointer",
-                transition: "0.2s",
-                textDecoration: "none",
-                color: "inherit",
-                whiteSpace: "nowrap",
-              }}
-              onMouseEnter={(e) => (e.target.style.background = "#e5e5e5")}
-              onMouseLeave={(e) => (e.target.style.background = "#f5f5f5")}
-            >
-              {category.name}
-            </a>
-          ))}
-        </div>
-      </section>
+      {/* CATEGORY NAVBAR */}
+      <section style={{ marginTop: 30 }}>
+        {isMobile ? (
+          <div style={styles.mobileBubbleWrapper}>
+            {["all", ...categories.map((c) => String(c.category_id))].map(
+              (catId, index) => {
+                const catName =
+                  catId === "all"
+                    ? "All"
+                    : categories.find((c) => String(c.category_id) === catId)
+                        ?.name;
 
-      {/* FEATURED PRODUCTS */}
-      <section style={{ marginTop: 48, padding: "0 16px" }}>
-        <h2
-          style={{
-            fontSize: isMobile ? 24 : 32,
-            fontWeight: 600,
-            marginBottom: 24,
-          }}
-        >
-          Featured Products
-        </h2>
-        {featuredProducts.length > 0 ? (
-          <FeaturedCarousel products={featuredProducts} addToCart={addToCart} />
+                return (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      setSelectedCategory(catId);
+                      setSlideIndex(0);
+                    }}
+                    style={{
+                      ...styles.mobileBubble,
+                      backgroundColor:
+                        selectedCategory === catId ? "#000" : "#f0f0f0",
+                      color: selectedCategory === catId ? "#fff" : "#333",
+                    }}
+                  >
+                    {catName}
+                  </div>
+                );
+              }
+            )}
+          </div>
         ) : (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "40px 20px",
-              background: "#f9f9f9",
-              borderRadius: "8px",
-              color: "#666",
-            }}
-          >
-            No products available at the moment.
+          <div style={styles.tabsWrapper}>
+            <div style={styles.tabsContainer}>
+              <div
+                onClick={() => {
+                  setSelectedCategory("all");
+                  setSlideIndex(0);
+                }}
+                style={{
+                  ...styles.tab,
+                  borderBottom:
+                    selectedCategory === "all"
+                      ? "3px solid black"
+                      : "3px solid transparent",
+                  color: selectedCategory === "all" ? "black" : "#777",
+                }}
+              >
+                All
+              </div>
+
+              {categories.map((cat) => (
+                <div
+                  key={cat.category_id}
+                  onClick={() => {
+                    setSelectedCategory(String(cat.category_id));
+                    setSlideIndex(0);
+                  }}
+                  style={{
+                    ...styles.tab,
+                    borderBottom:
+                      selectedCategory === String(cat.category_id)
+                        ? "3px solid black"
+                        : "3px solid transparent",
+                    color:
+                      selectedCategory === String(cat.category_id)
+                        ? "black"
+                        : "#777",
+                  }}
+                >
+                  {cat.name}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </section>
 
-      {/* CATEGORY SECTIONS */}
-      {categories.map((category) => {
-        const categoryProducts = products.filter(
-          (product) => product.category_id === category.category_id
-        );
-        if (categoryProducts.length === 0) return null;
+      {/* ALL PRODUCTS SLIDER */}
+      <section style={{ marginTop: 20, marginBottom: 10, padding: "0 0px" }}>
+        {isMobile ? (
+          <div style={styles.mobileGrid}>
+            {filteredAllProducts.slice(0, 4).map((product) => (
+              <div key={product.product_id} style={styles.mobileCardWrapper}>
+                <ProductCard product={product} addToCart={addToCart} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={styles.sliderRow}>
+            {getVisibleProducts().map((product) => (
+              <div
+                key={product.product_id}
+                style={{ 
+                  minWidth: `${100 / visibleCount}%`, 
+                  padding: "0 8px",
+                  marginBottom: "30px" // ADDED MARGIN
+                }}
+              >
+                <ProductCard product={product} addToCart={addToCart} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
-        return (
-          <section
-            id={`category-${category.category_id}`}
-            key={category.category_id}
-            style={{ padding: "48px 16px" }}
-          >
-            <h2
-              style={{
-                fontSize: isMobile ? 24 : 32,
-                fontWeight: 600,
-                marginBottom: 24,
-              }}
-            >
-              {category.name}
-            </h2>
+      {/* MAIN GRAY BACKGROUND SECTION */}
+      <section style={styles.graySection}>
+        {/* Side sections have their own white backgrounds */}
+        <SideBySide />
+        
+        {/* Add spacing between sections */}
+        <div style={styles.sectionSpacing}>
+          <BrandStatement />
+        </div>
 
-            <div
-              style={{
-                display: "grid",
-                gap: 24,
-                gridTemplateColumns: isMobile
-                  ? "repeat(2, 1fr)"
-                  : "repeat(6, 1fr)",
-              }}
-            >
-              {categoryProducts.slice(0, 6).map((product) => (
-                <ProductCard
-                  key={product.product_id}
-                  product={product}
-                  addToCart={addToCart}
+        {/* BEST SELLERS - This needs white background for contrast */}
+        <section style={styles.bestSellersSection}>
+          <h2 style={styles.bestTitle}>Best Sellers</h2>
+          <p style={styles.bestSubtitle}>
+            Our most loved products, hand-picked and trending right now.
+          </p>
+
+          {/* Slider Container */}
+          <div style={styles.sliderContainer}>
+            {/* Left Arrow - Only show if there are more items than visible */}
+            {featuredProducts.length > featuredVisibleCount && (
+              <button 
+                onClick={handlePrevFeatured}
+                style={styles.arrowButton}
+                className="arrow-left"
+              >
+                ‹
+              </button>
+            )}
+
+            {/* Slider Row */}
+            <div style={styles.sliderRow}>
+              {getVisibleFeatured().map((product, index) => (
+                <div
+                  key={`${product.product_id}-${index}`}
+                  style={{
+                    minWidth: `${100 / featuredVisibleCount}%`,
+                    padding: "0 8px",
+                    transition: "transform 0.5s ease",
+                    marginBottom: "30px" // ADDED MARGIN
+                  }}
+                >
+                  <LandingProductCard product={product} />
+                </div>
+              ))}
+            </div>
+
+            {/* Right Arrow - Only show if there are more items than visible */}
+            {featuredProducts.length > featuredVisibleCount && (
+              <button 
+                onClick={handleNextFeatured}
+                style={styles.arrowButton}
+                className="arrow-right"
+              >
+                ›
+              </button>
+            )}
+          </div>
+
+          {/* Dots Indicator */}
+          {featuredProducts.length > featuredVisibleCount && (
+            <div style={styles.dotsContainer}>
+              {Array.from({ 
+                length: Math.ceil(featuredProducts.length / featuredVisibleCount)
+              }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    // Calculate starting index for this dot
+                    const startIndex = i * featuredVisibleCount;
+                    setFeaturedIndex(startIndex);
+                  }}
+                  style={{
+                    ...styles.dot,
+                    backgroundColor: 
+                      Math.floor(featuredIndex / featuredVisibleCount) === i 
+                        ? '#000' 
+                        : '#ccc'
+                  }}
                 />
               ))}
             </div>
-          </section>
-        );
-      })}
+          )}
+        </section>
 
-      {/* FOOTER NOTE */}
-      <div
-        style={{
-          marginTop: 48,
-          padding: "20px 16px",
-          textAlign: "center",
-          background: "#f5f5f5",
-          color: "#666",
-          fontSize: "14px",
-        }}
-      >
-        Showing all {products.length} products
-      </div>
-    </div>
+        {/* Add spacing before WhyShopWithUs */}
+        <div style={styles.sectionSpacing}>
+          <WhyShopWithUs />
+        </div>
+      </section>
+    </>
   );
 }
+
+/* ---------------- Styles ---------------- */
+const styles = {
+  loader: {
+    height: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: 18,
+    color: "#666",
+  },
+
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: 600,
+    marginBottom: 20,
+  },
+
+  // Main gray background section
+  graySection: {
+    background: "#f9fafb",
+    width: "100%",
+    paddingTop: "60px",
+    paddingBottom: "60px",
+  },
+
+  // White section within gray area (like Best Sellers)
+  bestSellersSection: {
+    background: "white",
+    width: "100%",
+    padding: "60px 20px",
+    textAlign: "center",
+    marginTop: "60px",
+    marginBottom: "60px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    position: "relative",
+  },
+
+  // Spacing between components within gray section
+  sectionSpacing: {
+    marginTop: "60px",
+    marginBottom: "60px",
+  },
+
+  /* Slider Styles */
+  sliderContainer: {
+    position: "relative",
+    maxWidth: "1400px",
+    margin: "0 auto",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px 0", // ADDED PADDING
+  },
+
+  arrowButton: {
+    position: "absolute",
+    top: "50%",
+    transform: "translateY(-50%)",
+    background: "white",
+    border: "1px solid #ddd",
+    borderRadius: "50%",
+    width: "48px",
+    height: "48px",
+    fontSize: "24px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    transition: "all 0.3s ease",
+    zIndex: 10,
+  },
+
+  dotsContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "40px", // INCREASED MARGIN
+  },
+
+  dot: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+    border: "none",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+  },
+
+  sliderRow: {
+    display: "flex",
+    overflow: "hidden",
+    maxWidth: "1400px",
+    margin: "0 auto",
+    width: "100%",
+  },
+
+  /* Desktop Tabs */
+  tabsWrapper: {
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+    overflowX: "auto",
+  },
+
+  tabsContainer: {
+    display: "flex",
+    gap: 30,
+    borderBottom: "1px solid #ddd",
+    paddingBottom: 10,
+  },
+
+  tab: {
+    fontSize: 16,
+    cursor: "pointer",
+    paddingBottom: 8,
+    transition: "0.2s",
+    whiteSpace: "nowrap",
+  },
+
+  /* Mobile Bubbles */
+  mobileBubbleWrapper: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gridAutoRows: "50px",
+    gap: "8px",
+    padding: "0 10px",
+    justifyContent: "center",
+  },
+
+  mobileBubble: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 25,
+    padding: "8px 12px",
+    fontSize: 14,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    transition: "0.2s",
+  },
+
+  mobileGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: "12px",
+  },
+
+  mobileCardWrapper: {
+    transform: "scale(0.9)",
+    marginBottom: "20px", // ADDED MARGIN
+  },
+
+  bestTitle: {
+    fontSize: "34px",
+    fontWeight: "700",
+    fontFamily: "Poppins, sans-serif",
+    marginBottom: "10px",
+    color: "#111",
+  },
+
+  bestSubtitle: {
+    fontSize: "16px",
+    fontWeight: "400",
+    color: "#555",
+    maxWidth: "500px",
+    margin: "0 auto 40px auto",
+    lineHeight: "1.6",
+  },
+};
+
+// Add CSS for arrow positioning
+const styleSheet = document.styleSheets[0];
+styleSheet.insertRule(`
+  .arrow-left {
+    left: -24px;
+  }
+`, styleSheet.cssRules.length);
+
+styleSheet.insertRule(`
+  .arrow-right {
+    right: -24px;
+  }
+`, styleSheet.cssRules.length);
+
+styleSheet.insertRule(`
+  .arrow-left:hover, .arrow-right:hover {
+    background: #f8f8f8;
+    border-color: #999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+`, styleSheet.cssRules.length);

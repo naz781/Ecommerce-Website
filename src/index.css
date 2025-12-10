@@ -2,7 +2,8 @@
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box; /* ensures padding/border don’t increase width */
+  /* ensures padding/border don’t increase width */
+  box-sizing: border-box; 
 }
 
 body {
@@ -15,12 +16,12 @@ body {
 }
 
 /* Wrapper to center content and avoid card-like structure */
-#root, .app-container {
+/* #root, .app-container {
   width: 100%;
-  max-width: 1280px; /* limits max width on large screens */
-  margin: 0 auto; /* centers content */
-  padding: 0 1rem; /* adds horizontal padding */
-}
+  /* max-width: 1280px; limits max width on large screens */
+  /* margin: 0 auto; centers content
+  padding: 0 1rem; adds horizontal padding */
+/* } */ */
 
 /* Ensure inputs, buttons, navbars, and other block elements don’t overflow */
 input, button, select, textarea {

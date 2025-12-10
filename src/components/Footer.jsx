@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaFacebook,
   FaInstagram,
@@ -8,6 +9,7 @@ import {
 
 export default function Footer() {
   const [openSection, setOpenSection] = useState(null);
+  const navigate = useNavigate();
 
   const toggleSection = (section) => {
     setOpenSection(openSection === section ? null : section);
@@ -19,43 +21,73 @@ export default function Footer() {
       title: "Customer Care",
       content: (
         <>
-          <p>123 Broadway, Suite 456</p>
-          <p>New York, NY 10006</p>
-          <p style={{ marginTop: "0.8rem" }}>+1 (212) 555-1234‬</p>
-          <p>support@3sproshop.com</p>
+          <p>6 Hazlewood Ct, Jericho, New York, 11753</p>
+          <p>New York, NY 10006 </p>
+          <p style={{ marginTop: "0.8rem" }}>+1 (732) 474-3377‬</p>
+          <p>sales@3sproshop.com</p>
           <div style={{ display: "flex", gap: "0.6rem", marginTop: "1.2rem" }}>
-            {[FaFacebook, FaInstagram, FaTwitter, FaYoutube].map((Icon, index) => (
-              <a
-                key={index}
-                href="#"
-                style={{
-                  padding: "0.5rem",
-                  borderRadius: "50%",
-                  backgroundColor: "#f3f4f6",
-                }}
-              >
-                <Icon size={18} color="#111827" />
-              </a>
-            ))}
-          </div>
+  {[
+    { Icon: FaFacebook, url: "https://www.facebook.com/" },
+    { Icon: FaInstagram, url: "https://www.instagram.com/" },
+    { Icon: FaTwitter, url: "https://twitter.com/" },
+    { Icon: FaYoutube, url: "https://www.youtube.com/" },
+  ].map(({ Icon, url }, index) => (
+    <a
+      key={index}
+      href={url}
+      target="_blank"        // opens in new tab
+      rel="noopener noreferrer"  // security
+      style={{
+        padding: "0.5rem",
+        borderRadius: "50%",
+        backgroundColor: "#f3f4f6",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Icon size={18} color="#111827" />
+    </a>
+  ))}
+</div>
+
         </>
       ),
     },
     {
       id: "find",
       title: "Find It Fast",
-      content: ["About Us", "Privacy Policy", "Terms and Conditions", "Contact Us"].map((t, i) => (
-        <p key={i} style={{ marginBottom: "0.4rem", cursor: "pointer" }}>
-          {t}
+      content: [
+        { label: "About Us", path: "/about-us" },
+        { label: "Privacy Policy", path: "/privacy-policy" },
+        { label: "Terms and Conditions", path: "/terms-and-conditions" },
+        { label: "Contact Us", path: "/contact-us" },
+      ].map((item, i) => (
+        <p
+          key={i}
+          style={{ marginBottom: "0.4rem", cursor: "pointer" }}
+          onClick={() => navigate(item.path)}
+        >
+          {item.label}
         </p>
       )),
     },
     {
       id: "other",
       title: "Other Business",
-      content: ["My Account", "Track Order", "Wishlist", "Returns / Refund"].map((t, i) => (
-        <p key={i} style={{ marginBottom: "0.4rem", cursor: "pointer" }}>
-          {t}
+      content: [
+        { label: "My Account", path: "/account" },
+        { label: "Track Order", path: "/track-order" },
+        { label: "Wishlist", path: "/wishlist" },
+         { label: "FAQ", path: "/faq" },   
+        { label: "Returns / Refund", path: "/refund-returns" },
+      ].map((item, i) => (
+        <p
+          key={i}
+          style={{ marginBottom: "0.4rem", cursor: "pointer" }}
+          onClick={() => navigate(item.path)}
+        >
+          {item.label}
         </p>
       )),
     },
@@ -188,7 +220,7 @@ export default function Footer() {
           borderTop: "1px solid #e5e7eb",
         }}
       >
-        © {new Date().getFullYear()} CrestMart LLC — All rights reserved.
+        © {new Date().getFullYear()} 2025 3S Smart Solutions Star, Inc ---All rights reserved
       </div>
     </footer>
   );
