@@ -147,7 +147,9 @@ export default function Home() {
           },
         ]}
       />
-
+  <section style={{ textAlign: "center", marginTop: 40 }}>
+          <h2 style={styles.sectionTitle}>All Products</h2>
+        </section>
       <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
         {/* CATEGORY FILTER */}
         <section style={{ marginTop: 30 }}>
@@ -227,9 +229,7 @@ export default function Home() {
         </section>
 
         {/* SECTION TITLE */}
-        <section style={{ textAlign: "center", marginTop: 40 }}>
-          <h2 style={styles.sectionTitle}>Products</h2>
-        </section>
+      
 
         {/* RESPONSIVE PRODUCT LAYOUT */}
         <section
