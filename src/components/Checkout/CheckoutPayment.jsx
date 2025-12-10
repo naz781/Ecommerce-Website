@@ -36,14 +36,14 @@ export default function CheckoutPayment({
           3. Payment
         </Typography>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <LockIcon sx={{ color: "text.secondary" }} />
           {completed.payment ? (
             <Typography sx={{ color: "primary.main", fontWeight: 600 }}>
               Saved
             </Typography>
           ) : null}
-        </Box>
+        </Box> */}
       </Box>
 
       <Collapse in={!completed.payment || activeStep === 2}>
