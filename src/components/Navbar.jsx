@@ -10,6 +10,7 @@ import CartSidebar from "../components/CartSidebar";
 import { WishlistContext } from "../components/WishlistContext";
 import { AuthContext } from "../components/AuthContext";
 import AuthModal from "../components/AuthModal"; // New modal
+import { FaSignOutAlt } from "react-icons/fa";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -102,26 +103,18 @@ function Navbar() {
 
 
 {user && (
-  <button
-    style={{
-      marginRight:"20px",
-      marginLeft: "10px",
-      padding: "6px 12px",
-      border: "none",
-      background: "#f44336",
-      color: "white",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontSize: "14px"
-    }}
+  <FaSignOutAlt
+    size={22} // adjust size
+    color="#030000ff" // match previous button color
+    style={{ cursor: "pointer", marginLeft: "10px", marginRight: "20px" }}
+    title="Logout"
     onClick={async () => {
       await supabase.auth.signOut();
       setUser(null);
     }}
-  >
-    Logout
-  </button>
+  />
 )}
+
 
 
             <div
